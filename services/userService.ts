@@ -26,4 +26,18 @@ export const userService = {
     const response = await axiosClient.delete(`/users/${id}`);
     return response.data;
   },
+
+  createUser: async (data: FormData): Promise<ApiResponse<User>> => {
+    const response = await axiosClient.post('/users', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  updateUser: async (id: string, data: FormData): Promise<ApiResponse<User>> => {
+    const response = await axiosClient.patch(`/users/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
 };

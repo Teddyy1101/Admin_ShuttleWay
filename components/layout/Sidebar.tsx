@@ -120,7 +120,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               className="overflow-hidden"
             >
               <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent whitespace-nowrap">
-                🚌 Bus Admin
+                Admin Dashboard 
               </h1>
             </motion.div>
           )}

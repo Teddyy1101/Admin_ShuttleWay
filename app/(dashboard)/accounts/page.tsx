@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+
 import PageWrapper from '@/components/PageWrapper';
 import PageHeader from '@/components/PageHeader';
+import ConfirmModal from '@/components/ConfirmModal';
+import UserFormDrawer from '@/components/UserFormDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   Plus,
   Filter,
-  MoreVertical,
   Shield,
   User as UserIcon,
   Car,
@@ -16,10 +18,27 @@ import {
   Edit,
   Trash2,
   Lock,
+  Unlock,
+  Phone,
+  Link as LinkIcon,
 } from 'lucide-react';
 
 import { useUsers } from '@/hooks/useUsers';
 import { Role, User } from '@/types/user';
+
+const formatDateTime = (dateString?: string | Date | null) => {
+  if (!dateString) return 'Chưa tạo';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'Chưa tạo';
+  
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear().toString();
+  
+  return `${hours}:${minutes} ${day}/${month}/${year}`;
+};
 
 const RoleBadge = ({ role }: { role: Role }) => {
   const configs = {
@@ -54,8 +73,38 @@ const StatusBadge = ({ isActive }: { isActive: boolean }) => {
 };
 
 export default function AccountsPage() {
-  const { users, total, isLoading, params, updateFilters, changePage } = useUsers({ page: 1, limit: 10 });
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const { users, total, isLoading, params, updateFilters, changePage, toggleStatus, deleteAccount, createUser, updateUser } = useUsers({ page: 1, limit: 10 });
+  const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
+  const [accountToEdit, setAccountToEdit] = useState<User | null>(null);
+  
+  // Custom states for new user drawer
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isFormLoading, setIsFormLoading] = useState(false);
+
+  const confirmDelete = async () => {
+    if (accountToDelete) {
+      await deleteAccount(accountToDelete);
+      setAccountToDelete(null);
+    }
+  };
+
+  const handleCreateOrUpdateUser = async (data: FormData) => {
+    try {
+      setIsFormLoading(true);
+      if (accountToEdit) {
+        await updateUser(accountToEdit.id, data);
+      } else {
+        await createUser(data);
+      }
+      setIsDrawerOpen(false);
+      setAccountToEdit(null);
+    } catch (error) {
+      // Error is handled inside the hook (toast)
+      console.error(error);
+    } finally {
+      setIsFormLoading(false);
+    }
+  };
 
   // Xử lý Timeout chống Spam Search
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,6 +137,10 @@ export default function AccountsPage() {
           ]}
         />
         <motion.button
+          onClick={() => {
+            setAccountToEdit(null);
+            setIsDrawerOpen(true);
+          }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm shadow-blue-600/20"
@@ -148,6 +201,8 @@ export default function AccountsPage() {
             <thead className="bg-gray-50/50 dark:bg-gray-800/50 text-xs uppercase text-gray-700 dark:text-gray-300">
               <tr>
                 <th className="px-6 py-4 font-semibold">Tài khoản</th>
+                <th className="px-6 py-4 font-semibold">Số điện thoại</th>
+                <th className="px-6 py-4 font-semibold">Liên kết</th>
                 <th className="px-6 py-4 font-semibold">Vai trò</th>
                 <th className="px-6 py-4 font-semibold">Trạng thái</th>
                 <th className="px-6 py-4 font-semibold">Ngày Đăng ký</th>
@@ -159,6 +214,8 @@ export default function AccountsPage() {
                 // Skeleton UI cho Table
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
+                    <td className="px-6 py-4 whitespace-nowrap"><div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-full"></div></td>
+                    <td className="px-6 py-4 whitespace-nowrap"><div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24"></div></td>
                     <td className="px-6 py-4 whitespace-nowrap"><div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-full"></div></td>
                     <td className="px-6 py-4 whitespace-nowrap"><div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-20"></div></td>
                     <td className="px-6 py-4 whitespace-nowrap"><div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24"></div></td>
@@ -193,59 +250,77 @@ export default function AccountsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col gap-1.5 min-w-[120px]">
+                        {account.phone ? (
+                          <div className="flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100">
+                            <Phone size={14} className="text-gray-400" />
+                            <span>{account.phone}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Chưa cập nhật</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col gap-1.5 min-w-[140px]">
+                        {(account as any).role === 'STUDENT' && (account as any).parent && (
+                          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                            <LinkIcon size={14} className="text-blue-400" />
+                            <span className="truncate max-w-[150px]" title={`Phụ huynh: ${(account as any).parent.fullName}`}>PH: {(account as any).parent.fullName}</span>
+                          </div>
+                        )}
+                        {(account as any).role === 'PARENT' && (account as any).students && (account as any).students.length > 0 && (
+                          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                            <LinkIcon size={14} className="text-green-400" />
+                            <span className="truncate max-w-[150px]" title={`Học sinh: ${(account as any).students.map((s: any) => s.fullName).join(', ')}`}>
+                              HS: {(account as any).students.map((s: any) => s.fullName).join(', ')}
+                            </span>
+                          </div>
+                        )}
+                        {!(account as any).parent && (!(account as any).students || (account as any).students.length === 0) && (
+                          <span className="text-xs text-gray-400 italic">Không có liên kết</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <RoleBadge role={account.role} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge isActive={account.isActive} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {account.createdAt || 'Chưa tạo'}
+                      {account.createdAt ? formatDateTime(account.createdAt) : 'Chưa tạo'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="relative inline-block text-left">
+                      <div className="flex items-center justify-end gap-2 text-gray-400">
                         <button
-                          onClick={() => setOpenDropdown(openDropdown === account.id ? null : account.id)}
-                          className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-colors"
+                          onClick={() => {
+                            setAccountToEdit(account);
+                            setIsDrawerOpen(true);
+                          }}
+                          className="p-2 rounded-lg hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors tooltip-trigger"
+                          title="Chỉnh sửa"
                         >
-                          <MoreVertical size={16} />
+                          <Edit size={16} />
                         </button>
-                        
-                        <AnimatePresence>
-                          {openDropdown === account.id && (
-                            <>
-                              <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                transition={{ duration: 0.15 }}
-                                className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 z-20 overflow-hidden"
-                              >
-                                <div className="py-1">
-                                  <button className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                    <Edit size={14} className="mr-3 text-gray-400" />
-                                    Chỉnh sửa
-                                  </button>
-                                  {account.isActive ? (
-                                    <button className="flex w-full items-center px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20">
-                                      <Lock size={14} className="mr-3 text-amber-500" />
-                                      Khóa tài khoản
-                                    </button>
-                                  ) : (
-                                    <button className="flex w-full items-center px-4 py-2.5 text-sm text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
-                                      <Lock size={14} className="mr-3 text-emerald-500" />
-                                      Mở khóa tài khoản
-                                    </button>
-                                  )}
-                                  <button className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
-                                    <Trash2 size={14} className="mr-3 text-red-500" />
-                                    Xóa tài khoản
-                                  </button>
-                                </div>
-                              </motion.div>
-                            </>
-                          )}
-                        </AnimatePresence>
+                        <button
+                          onClick={() => toggleStatus(account)}
+                          className={`p-2 rounded-lg transition-colors tooltip-trigger ${
+                            account.isActive 
+                              ? 'hover:text-amber-600 hover:bg-amber-50 dark:hover:text-amber-400 dark:hover:bg-amber-900/30' 
+                              : 'hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30'
+                          }`}
+                          title={account.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                        >
+                          {account.isActive ? <Lock size={16} /> : <Unlock size={16} />}
+                        </button>
+                        <button
+                          onClick={() => setAccountToDelete(account.id)}
+                          className="p-2 rounded-lg hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors tooltip-trigger"
+                          title="Xóa tài khoản"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </motion.tr>
@@ -255,7 +330,7 @@ export default function AccountsPage() {
               
               {!isLoading && users.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <div className="flex flex-col items-center gap-2">
                       <Search size={32} className="text-gray-300" />
                       <p>Không tìm thấy tài khoản nào phù hợp.</p>
@@ -266,25 +341,28 @@ export default function AccountsPage() {
             </tbody>
           </table>
         </div>
-        
-        {/* Pagination simple UI */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between text-sm text-gray-500">
-          <div>Hiển thị <span className="font-semibold text-gray-900 dark:text-white">{users.length}</span> / {total} tài khoản</div>
-          <div className="flex gap-1">
-            <button 
-              className="px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50" 
-              disabled={params.page === 1}
-              onClick={() => changePage((params.page || 1) - 1)}
-            >Trước</button>
-            <button className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium">{params.page || 1}</button>
-            <button 
-              className="px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-              disabled={users.length < (params.limit || 10)}
-              onClick={() => changePage((params.page || 1) + 1)}
-            >Sau</button>
-          </div>
-        </div>
       </div>
+        
+      <ConfirmModal
+        isOpen={!!accountToDelete}
+        onClose={() => setAccountToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Xác nhận xóa tài khoản"
+        description="Bạn có chắc chắn muốn xóa tài khoản này? Hành động này không thể hoàn tác."
+        confirmText="Đồng ý xóa"
+      />
+
+      {/* User Creation / Update Drawer */}
+      <UserFormDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setAccountToEdit(null);
+        }}
+        onSubmit={handleCreateOrUpdateUser}
+        isLoading={isFormLoading}
+        initialData={accountToEdit}
+      />
     </PageWrapper>
   );
 }

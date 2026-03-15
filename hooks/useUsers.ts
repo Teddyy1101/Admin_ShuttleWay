@@ -12,6 +12,10 @@ export const useUsers = (initialParams?: GetUsersParams): {
   params: GetUsersParams;
   updateFilters: (newParams: Partial<GetUsersParams>) => void;
   changePage: (newPage: number) => void;
+  toggleStatus: (user: User) => Promise<void>;
+  deleteAccount: (id: string) => Promise<void>;
+  createUser: (data: FormData) => Promise<void>;
+  updateUser: (id: string, data: FormData) => Promise<void>;
   mutate: any;
 } => {
   const [params, setParams] = useState<GetUsersParams>(initialParams || { page: 1, limit: 10 });
@@ -37,6 +41,66 @@ export const useUsers = (initialParams?: GetUsersParams): {
     setParams(prev => ({ ...prev, page: newPage }));
   }, []);
 
+  const toggleStatus = async (user: User) => {
+    try {
+      // Optimistic update
+      mutate(
+        (currentData: any) => {
+          if (!currentData) return currentData;
+          return {
+            ...currentData,
+            data: {
+              ...currentData.data,
+              data: currentData.data.data.map((u: User) =>
+                u.id === user.id ? { ...u, isActive: !user.isActive } : u
+              ),
+            },
+          };
+        },
+        { revalidate: false }
+      );
+      
+      await userService.updateUserStatus(user.id, !user.isActive);
+      toast.success(user.isActive ? 'Đã khóa tài khoản' : 'Đã mở khóa tài khoản');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại');
+      // Revert optimism if failed
+      mutate();
+    }
+  };
+
+  const deleteAccount = async (id: string) => {
+    try {
+      await userService.deleteUser(id);
+      toast.success('Đã xóa tài khoản');
+      mutate();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại');
+    }
+  };
+
+  const createUser = async (data: FormData) => {
+    try {
+      await userService.createUser(data);
+      toast.success('Thêm tài khoản thành công');
+      mutate();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Lỗi khi thêm tài khoản');
+      throw error;
+    }
+  };
+
+  const updateUser = async (id: string, data: FormData) => {
+    try {
+      await userService.updateUser(id, data);
+      toast.success('Cập nhật tài khoản thành công');
+      mutate();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Lỗi khi cập nhật tài khoản');
+      throw error;
+    }
+  };
+
   return {
     users: data?.data?.data || [],
     total: data?.data?.meta?.total || 0,
@@ -45,6 +109,10 @@ export const useUsers = (initialParams?: GetUsersParams): {
     params,
     updateFilters,
     changePage,
+    toggleStatus,
+    deleteAccount,
+    createUser,
+    updateUser,
     mutate,
   };
 };

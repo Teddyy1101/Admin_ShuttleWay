@@ -13,10 +13,17 @@ import {
   Route,
   Ticket,
   BellRing,
-  MessageSquareDiff,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  CreditCard,
+  ReceiptText,
+  Send,
+  History,
+  Headset,
+  CalendarX,
+  LifeBuoy,
+  CalendarDays,
 } from 'lucide-react';
 
 // Cấu trúc dữ liệu menu linh hoạt có hỗ trợ sub-menu
@@ -37,32 +44,34 @@ const menuItems: MenuItem[] = [
       { href: '/buses', label: 'Quản lý xe', icon: Bus },
       { href: '/stations', label: 'Quản lý trạm', icon: MapPin },
       { href: '/routes', label: 'Quản lý tuyến', icon: Route },
+      { href: '/trips', label: 'Quản lý chuyến đi', icon: CalendarDays }
     ],
   },
   {
-    label: 'Quản lý vé & thẻ',
+    label: 'Quản lý vé & khuyến mãi',
     icon: Ticket,
     subItems: [
-      { href: '/tickets/orders', label: 'Đơn hàng', icon: Ticket },
-      { href: '/tickets/cards', label: 'Thẻ xe buýt', icon: Ticket },
+      { href: '/tickets', label: 'Danh sách vé', icon: CreditCard },
+      { href: '/promotions', label: 'Khuyến mãi', icon: Ticket },
     ]
   },
   {
     label: 'Quản lý thông báo',
     icon: BellRing,
     subItems: [
-      { href: '/notifications/send', label: 'Gửi thông báo', icon: BellRing },
-      { href: '/notifications/history', label: 'Lịch sử', icon: BellRing },
+      { href: '/notifications/send', label: 'Gửi thông báo', icon: Send },
+      { href: '/notifications/history', label: 'Lịch sử', icon: History },
     ]
   },
   {
-    label: 'Quản lý yêu cầu & do...',
-    icon: MessageSquareDiff,
+    label: 'Yêu cầu & Hỗ trợ',
+    icon: Headset,
     subItems: [
-      { href: '/requests/absence', label: 'Xin nghỉ', icon: MessageSquareDiff },
-      { href: '/requests/support', label: 'Hỗ trợ', icon: MessageSquareDiff },
+      { href: '/requests/absence', label: 'Xin nghỉ', icon: CalendarX },
+      { href: '/requests/support', label: 'Hỗ trợ', icon: LifeBuoy },
     ]
   },
+  { href: '/transactions', label: 'Lịch sử giao dịch', icon: ReceiptText }
 ];
 
 interface SidebarProps {

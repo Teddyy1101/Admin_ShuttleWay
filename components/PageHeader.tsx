@@ -13,7 +13,7 @@ interface PageHeaderProps {
 export default function PageHeader({ title, breadcrumbs }: PageHeaderProps) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quản lý vận hành</h1>
       <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1.5">
         {breadcrumbs.map((crumb, index) => {
           const isLast = index === breadcrumbs.length - 1;

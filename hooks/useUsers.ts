@@ -7,6 +7,8 @@ import { useCallback, useState } from 'react';
 export const useUsers = (initialParams?: GetUsersParams): {
   users: User[];
   total: number;
+  page: number;
+  limit: number;
   isLoading: boolean;
   isError: boolean;
   params: GetUsersParams;
@@ -104,6 +106,8 @@ export const useUsers = (initialParams?: GetUsersParams): {
   return {
     users: data?.data?.data || [],
     total: data?.data?.meta?.total || 0,
+    page: data?.data?.meta?.page || 1,
+    limit: data?.data?.meta?.limit || 10,
     isLoading,
     isError: !!error,
     params,

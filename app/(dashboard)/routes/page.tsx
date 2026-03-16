@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import PageWrapper from '@/components/PageWrapper';
 import PageHeader from '@/components/PageHeader';
 import Pagination from '@/components/Pagination';
+import RouteEditModal from '@/components/routes/RouteEditModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Eye, Route as RouteIcon, Tag } from 'lucide-react';
+import { Search, Eye, Route as RouteIcon, Tag, Edit } from 'lucide-react';
 
 import { useRoutes } from '@/hooks/useRoute';
+import { Route } from '@/types/route';
 
 const StatusBadge = ({ isActive }: { isActive: boolean }) => {
   return (
@@ -26,7 +29,16 @@ const StatusBadge = ({ isActive }: { isActive: boolean }) => {
 };
 
 export default function RoutesPage() {
-  const { routes, total, page, limit, isLoading, params, updateFilters, changePage } = useRoutes({ page: 1, limit: 10 });
+  const router = useRouter();
+  const { routes, total, page, limit, isLoading, params, updateFilters, changePage, mutate } = useRoutes({ page: 1, limit: 10 });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+
+  const handleEditClick = (e: React.MouseEvent, route: Route) => {
+    e.stopPropagation();
+    setSelectedRoute(route);
+    setIsEditModalOpen(true);
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -50,9 +62,10 @@ export default function RoutesPage() {
         />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden filter-container">
+      <div className="bg-white rounded-l border border-gray-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden filter-container flex flex-col min-h-[calc(100vh-180px)]">
         {/* Actions Bar */}
-        <div className="border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-4 justify-end items-end p-4">
+        <div className="border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-4 justify-between items-center p-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Danh sách tuyến đường</h2>
           <div className="flex gap-2 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -70,19 +83,19 @@ export default function RoutesPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto flex-1">
           <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50 text-xs uppercase text-gray-700 dark:text-gray-300">
               <tr>
                 <th className="px-6 py-4 font-semibold">Tuyến</th>
-                <th className="px-6 py-4 font-semibold">Mã ID</th>
+                <th className="px-6 py-4 font-semibold">Mã tuyến</th>
                 <th className="px-6 py-4 font-semibold">Giá vé lượt</th>
                 <th className="px-6 py-4 font-semibold">Giá vé tháng</th>
                 <th className="px-6 py-4 font-semibold">Trạng thái</th>
                 <th className="px-6 py-4 text-right font-semibold">Hành động</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-800 border-b border-gray-200 dark:border-gray-800">
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
@@ -105,9 +118,13 @@ export default function RoutesPage() {
                       transition={{ duration: 0.2 }}
                       className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors group"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td 
+                        className="px-6 py-4 whitespace-nowrap cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/30 transition-colors"
+                        onClick={() => router.push(`/routes/${route.routeCode}`)}
+                        title="Nhấn để xem chi tiết tuyến đường"
+                      >
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 text-indigo-600 dark:text-indigo-400 font-bold overflow-hidden">
+                          <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 font-bold overflow-hidden">
                             <RouteIcon size={20} />
                           </div>
                           <div>
@@ -118,34 +135,57 @@ export default function RoutesPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                          {route.id.split('-')[0]}
+                      <td 
+                        className="px-6 py-4 whitespace-nowrap cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/30 transition-colors"
+                        onClick={() => router.push(`/routes/${route.routeCode}`)}
+                        title="Nhấn để xem chi tiết tuyến đường"
+                      >
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                          {route.routeCode}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td 
+                        className="px-6 py-4 whitespace-nowrap cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/30 transition-colors"
+                        onClick={() => router.push(`/routes/${route.routeCode}`)}
+                        title="Nhấn để xem chi tiết tuyến đường"
+                      >
                         <div className="flex items-center gap-1.5 font-medium text-emerald-600 dark:text-emerald-400">
                           <Tag size={14} />
                           {formatPrice(route.singlePrice)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td 
+                        className="px-6 py-4 whitespace-nowrap cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/30 transition-colors"
+                        onClick={() => router.push(`/routes/${route.routeCode}`)}
+                        title="Nhấn để xem chi tiết tuyến đường"
+                      >
                         <div className="flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400">
                           <Tag size={14} />
                           {formatPrice(route.monthlyPrice)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td 
+                        className="px-6 py-4 whitespace-nowrap cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/30 transition-colors"
+                        onClick={() => router.push(`/routes/${route.routeCode}`)}
+                        title="Nhấn để xem chi tiết tuyến đường"
+                      >
                         <StatusBadge isActive={route.isActive} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link
-                          href={`/routes/${route.id}`}
+                          href={`/routes/${route.routeCode}`}
                           className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
                           title="Xem chi tiết"
                         >
                           <Eye size={18} />
                         </Link>
+                        <button
+                          onClick={(e) => handleEditClick(e, route)}
+                          className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-colors ml-2"
+                          title="Chỉnh sửa"
+                        >
+                          <Edit size={18} />
+                        </button>
                       </td>
                     </motion.tr>
                   ))}
@@ -172,10 +212,21 @@ export default function RoutesPage() {
             currentPage={page}
             totalItems={total}
             limit={limit}
+            showingCount={routes.length}
             onPageChange={changePage}
           />
         )}
       </div>
+
+      <RouteEditModal 
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedRoute(null);
+        }}
+        route={selectedRoute}
+        onSuccess={() => mutate()}
+      />
     </PageWrapper>
   );
 }

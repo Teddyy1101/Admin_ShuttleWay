@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const { login, isAuthenticated, checkAuth } = useAuth();
   const router = useRouter();
 
@@ -41,8 +41,8 @@ export default function LoginPage() {
       // router.push('/') được xử lý bởi useEffect trên
     } catch (error: any) {
       // Ưu tiên hiển thị lỗi từ hook kiểm tra quyền, sau đó mới tới lỗi API
-      const errorMsg = error?.message && !error?.response 
-        ? error.message 
+      const errorMsg = error?.message && !error?.response
+        ? error.message
         : error?.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại';
       toast.error(errorMsg);
     } finally {
@@ -68,7 +68,7 @@ export default function LoginPage() {
         className="w-full max-w-md p-8 m-4 rounded-[2rem] bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-2xl relative z-10 box-border"
       >
         <div className="flex flex-col items-center mb-10">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 15 }}
@@ -135,8 +135,9 @@ export default function LoginPage() {
           </motion.button>
         </form>
       </motion.div>
-      
-      <style dangerouslySetInnerHTML={{__html: `
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes blob {
           0% { transform: translate(0px, 0px) scale(1); }
           33% { transform: translate(30px, -50px) scale(1.1); }

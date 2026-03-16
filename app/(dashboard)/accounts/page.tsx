@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import PageWrapper from '@/components/PageWrapper';
 import PageHeader from '@/components/PageHeader';
+import Pagination from '@/components/Pagination';
 import ConfirmModal from '@/components/ConfirmModal';
 import UserFormDrawer from '@/components/UserFormDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -73,11 +74,9 @@ const StatusBadge = ({ isActive }: { isActive: boolean }) => {
 };
 
 export default function AccountsPage() {
-  const { users, total, isLoading, params, updateFilters, changePage, toggleStatus, deleteAccount, createUser, updateUser } = useUsers({ page: 1, limit: 10 });
+  const { users, total, page, limit, isLoading, params, updateFilters, changePage, toggleStatus, deleteAccount, createUser, updateUser } = useUsers({ page: 1, limit: 10 });
   const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
   const [accountToEdit, setAccountToEdit] = useState<User | null>(null);
-  
-  // Custom states for new user drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFormLoading, setIsFormLoading] = useState(false);
 
@@ -99,7 +98,6 @@ export default function AccountsPage() {
       setIsDrawerOpen(false);
       setAccountToEdit(null);
     } catch (error) {
-      // Error is handled inside the hook (toast)
       console.error(error);
     } finally {
       setIsFormLoading(false);
@@ -151,7 +149,7 @@ export default function AccountsPage() {
       </div>
 
       {/* Tabs & Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden filter-container">
+      <div className="bg-white rounded-l border border-gray-200 dark:border-gray-800 overflow-hidden filter-container flex flex-col">
         <div className="border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-4 justify-between items-end px-4 pt-2">
           
           <div className="flex w-full sm:w-auto overflow-x-auto no-scrollbar gap-6">
@@ -341,6 +339,17 @@ export default function AccountsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Phân trang */}
+        {total > 0 && (
+          <Pagination
+            currentPage={page}
+            totalItems={total}
+            limit={limit}
+            showingCount={users.length}
+            onPageChange={changePage}
+          />
+        )}
       </div>
         
       <ConfirmModal

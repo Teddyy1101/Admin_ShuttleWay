@@ -8,22 +8,26 @@ import { useEffect, useState } from 'react';
 
 // 1. Tạo SVG Icon hình "giọt nước" giống Google Maps
 const createGoogleMapsPin = (index: number) => {
+  const fontSize = index >= 10 ? 11 : 14;
   const html = `
-    <div style="position: relative; width: 30px; height: 40px; display: flex; justify-content: center;">
-      <svg viewBox="0 0 32 42" style="width: 30px; height: 40px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.4));">
-        <path fill="#EA4335" d="M16 0C7.16 0 0 7.16 0 16c0 10.5 16 26 16 26s16-15.5 16-26C32 7.16 24.84 0 16 0z"/>
-        <circle cx="16" cy="16" r="11" fill="white"/>
+    <div style="position: relative; width: 34px; height: 44px; display: flex; justify-content: center;">
+      <svg viewBox="0 0 34 44" style="width: 34px; height: 44px; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));">
+        <path fill="#EA4335" d="M17 0C7.61 0 0 7.61 0 17c0 11.2 17 27 17 27s17-15.8 17-27C34 7.61 26.39 0 17 0z"/>
+        <circle cx="17" cy="16" r="10" fill="white"/>
+        <text x="17" y="16" text-anchor="middle" dominant-baseline="central" 
+              fill="#C62828" font-size="${fontSize}" font-weight="800" font-family="Arial, sans-serif">
+          ${index}  
+        </text>
       </svg>
-      <span style="position: absolute; top: 9px; width: 100%; text-align: center; color: #d93025; font-size: 13px; font-weight: 900; line-height: 1;">${index}</span>
     </div>
   `;
 
   return L.divIcon({
     className: '', 
     html: html,
-    iconSize: [30, 40],
-    iconAnchor: [15, 40], 
-    popupAnchor: [0, -40], 
+    iconSize: [34, 44],
+    iconAnchor: [17, 44], 
+    popupAnchor: [0, -44], 
   });
 };
 
@@ -99,15 +103,15 @@ export default function MapPreview({ stations, center }: { stations: any[], cent
       )}
 
       {/* Render các Marker */}
-      {stations.map((station) => (
+      {stations.map((station, index) => (
         <Marker
           key={station.id}
           position={[station.latitude, station.longitude]}
-          icon={createGoogleMapsPin(station.orderIndex)}
+          icon={createGoogleMapsPin(index + 1)}
         >
           <Popup>
             <div className="font-semibold text-gray-900">{station.name}</div>
-            <div className="text-sm text-gray-500">Trạm dừng thứ {station.orderIndex}</div>
+            <div className="text-sm text-gray-500">Trạm dừng thứ {index + 1}</div>
           </Popup>
         </Marker>
       ))}

@@ -22,6 +22,7 @@ export interface Station {
   latitude: number;
   longitude: number;
   orderIndex: number;
+  estimatedMinutes?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -54,6 +55,7 @@ export interface Trip {
 
 export interface Route {
   id: string;
+  routeCode: string;
   name: string;
   direction: Direction;
   shiftType: ShiftType;
@@ -75,3 +77,36 @@ export interface GetRoutesParams {
   search?: string;
   isActive?: boolean | string;
 }
+
+// Payload gửi lên API khi tạo trạm dừng mới
+export interface CreateStationPayload {
+  routeId: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  orderIndex: number;
+}
+
+// Payload gửi lên API khi cập nhật trạm dừng
+export interface UpdateStationPayload {
+  name?: string;
+  latitude?: number;
+  longitude?: number;
+  orderIndex?: number;
+}
+
+// Tham số query khi lấy danh sách trạm dừng
+export interface GetStationsParams {
+  routeId?: string;
+  isActive?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+// Payload gửi lên API khi cập nhật tuyến đường
+export interface UpdateRoutePayload {
+  singlePrice?: number;
+  monthlyPrice?: number;
+  isActive?: boolean;
+}
+

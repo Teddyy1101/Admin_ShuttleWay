@@ -20,7 +20,7 @@ export default function RouteDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const { route, isLoading, isError } = useRouteDetail(id);
+  const { route, isLoading, isError, mutate } = useRouteDetail(id);
   const [activeTab, setActiveTab] = useState<TabId>('INFO');
 
   const tabs: { id: TabId; label: string; icon?: any }[] = [
@@ -68,17 +68,17 @@ export default function RouteDetailPage() {
           title={`Chi tiết tuyến đường: ${route.name}`}
           breadcrumbs={[
             { label: 'Trang chủ', href: '/' },
-            { label: 'Quản lý vận hành', href: '/routes' },
+            { label: 'Quản lý tuyến', href: '/routes' },
             { label: route.name }
           ]}
         />
       </div>
 
       {/* Main Card */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
-        
+      <div className="min-h-[calc(100vh-180px)] bg-white dark:bg-gray-900 rounded-l border border-gray-200 dark:border-gray-800 overflow-hidden">
+
         {/* Inner Card Header */}
-        <div className="flex items-center gap-4 py-5 px-6 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-4 py-5 px-6  border-gray-100 dark:border-gray-800">
           <button
             onClick={() => router.back()}
             className="flex items-center justify-center p-2 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -86,12 +86,12 @@ export default function RouteDetailPage() {
             <ArrowLeft size={18} className="text-gray-700 dark:text-gray-300" />
           </button>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-0">
-            Chi tiết tuyến {route.name} ({route.id.split('-')[0]})
+            Chi tiết tuyến {route.routeCode}
           </h1>
         </div>
 
         {/* Tabs */}
-        <div className="px-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900">
+        <div className=" px-6 border-b border-gray-100 dark:border-gray-800 ">
           <div className="flex overflow-x-auto no-scrollbar gap-8">
             {tabs.map(tab => {
               const isActive = activeTab === tab.id;
@@ -99,11 +99,10 @@ export default function RouteDetailPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`pb-3 pt-4 text-sm transition-all duration-200 relative whitespace-nowrap ${
-                    isActive 
-                      ? 'text-blue-600 dark:text-blue-400 font-bold' 
+                  className={`pb-3 pt-4 text-sm transition-all duration-200 relative whitespace-nowrap ${isActive
+                      ? 'text-blue-600 dark:text-blue-400 font-bold'
                       : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-medium'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                   {isActive && (
@@ -129,7 +128,7 @@ export default function RouteDetailPage() {
               transition={{ duration: 0.2 }}
             >
               {activeTab === 'INFO' && <RouteInfoTab route={route} />}
-              {activeTab === 'STATIONS' && <RouteStationsTab route={route} />}
+              {activeTab === 'STATIONS' && <RouteStationsTab route={route} mutate={mutate} />}
               {activeTab === 'TRIPS' && <RouteTripsTab route={route} />}
             </motion.div>
           </AnimatePresence>

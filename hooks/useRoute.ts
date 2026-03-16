@@ -43,13 +43,13 @@ export const useRoutes = (initialParams?: GetRoutesParams) => {
   };
 };
 
-// SWR Hook quản lý chi tiết 1 Route
-export const useRouteDetail = (id: string) => {
-  const fetchKey = id ? `/routes/${id}` : null;
+// SWR Hook quản lý chi tiết 1 Route theo routeCode
+export const useRouteDetail = (routeCode: string) => {
+  const fetchKey = routeCode ? `/routes/${routeCode}` : null;
 
   const { data, error, isLoading, mutate } = useSWR(
     fetchKey,
-    () => routeService.getRouteById(id),
+    () => routeService.getRouteByCode(routeCode),
     {
       onError: (err) => {
         toast.error(err.response?.data?.message || 'Lỗi khi tải thông tin chi tiết tuyến đường');

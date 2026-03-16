@@ -6,15 +6,11 @@ export function StatCardSkeleton() {
     <div className="relative overflow-hidden rounded-2xl border border-gray-200/60 bg-white p-6 shadow-sm dark:border-gray-700/40 dark:bg-gray-900">
       <div className="flex items-center justify-between">
         <div className="space-y-3">
-          {/* Tiêu đề skeleton */}
           <div className="h-4 w-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
-          {/* Giá trị skeleton */}
           <div className="h-8 w-32 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
         </div>
-        {/* Icon skeleton */}
         <div className="h-14 w-14 animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-700" />
       </div>
-      {/* Shimmer effect */}
       <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
     </div>
   );

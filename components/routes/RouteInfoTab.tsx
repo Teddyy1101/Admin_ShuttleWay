@@ -41,16 +41,16 @@ export default function RouteInfoTab({ route }: RouteInfoTabProps) {
   );
 
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+    <div className="border border-gray-200 dark:border-gray-800 rounded-l overflow-hidden">
       {/* Row 1 */}
       <div className="grid grid-cols-1 md:grid-cols-4 border-b border-gray-200 dark:border-gray-800 last:border-0">
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-100 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
           Mã tuyến
         </div>
         <div className="p-4 text-sm font-semibold text-gray-900 dark:text-white md:border-r border-gray-200 dark:border-gray-800">
-          {route.id.split('-')[0]}
+          {route.routeCode}
         </div>
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-100 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
           Tên tuyến
         </div>
         <div className="p-4 text-sm font-semibold text-gray-900 dark:text-white">
@@ -60,13 +60,13 @@ export default function RouteInfoTab({ route }: RouteInfoTabProps) {
       
       {/* Row 2 */}
       <div className="grid grid-cols-1 md:grid-cols-4 border-b border-gray-200 dark:border-gray-800 last:border-0">
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-100 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
           Thời gian chuyến
         </div>
         <div className="p-4 text-sm text-gray-900 dark:text-gray-100 md:border-r border-gray-200 dark:border-gray-800">
           {formatTime(route.estimatedTime)}
         </div>
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-100 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
           Ca hoạt động
         </div>
         <div className="p-4 text-sm text-gray-900 dark:text-gray-100">
@@ -76,13 +76,13 @@ export default function RouteInfoTab({ route }: RouteInfoTabProps) {
 
       {/* Row 3 */}
       <div className="grid grid-cols-1 md:grid-cols-4 border-b border-gray-200 dark:border-gray-800 last:border-0">
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-100 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
           Giá vé lượt
         </div>
         <div className="p-4 text-sm text-gray-900 dark:text-gray-100 font-medium md:border-r border-gray-200 dark:border-gray-800">
           {formatPrice(route.singlePrice)}
         </div>
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-100 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
           Giá vé tháng
         </div>
         <div className="p-4 text-sm text-gray-900 dark:text-gray-100 font-medium">
@@ -92,7 +92,7 @@ export default function RouteInfoTab({ route }: RouteInfoTabProps) {
 
       {/* Row 4 */}
       <div className="grid grid-cols-1 md:grid-cols-[25%_75%] border-b border-gray-200 dark:border-gray-800 last:border-0">
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-100 dark:bg-gray-800/50 p-4 text-sm font-medium text-gray-600 dark:text-gray-400 md:border-r border-gray-200 dark:border-gray-800">
           Trạng thái
         </div>
         <div className="p-4 text-sm text-gray-900 dark:text-gray-100">

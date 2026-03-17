@@ -6,6 +6,7 @@ import { X, Save, Clock, Users, Truck, Calendar as CalendarIcon, AlertCircle } f
 import toast from 'react-hot-toast';
 import { useUsers } from '@/hooks/useUsers';
 import { useBuses } from '@/hooks/useBuses';
+import { tripService } from '@/services/tripService';
 
 interface EditTripAssignmentModalProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ export default function EditTripAssignmentModal({ isOpen, onClose, tripData, onS
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch real data
-  const { users } = useUsers({ limit: 100 });
+  const { users } = useUsers({ limit: 100, role: 'DRIVER' });
   const drivers = users.filter(u => u.isActive); 
   
   const { buses } = useBuses({ limit: 100 });
@@ -49,16 +50,12 @@ export default function EditTripAssignmentModal({ isOpen, onClose, tripData, onS
     setIsSubmitting(true);
     
     try {
-      // Mock API call since there's no tripService yet
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
       const payload = {
-        tripId: tripData?.id,
-        newDriverId: formData.driverId,
-        newBusId: formData.busId,
+        driverId: formData.driverId,
+        busId: formData.busId,
       };
       
-      console.log('Update Trip Assignment Payload:', payload);
+      await tripService.updateTrip(tripData.id, payload);
       
       toast.success('Cập nhật phân công thành công!');
       if (onSuccess) onSuccess();

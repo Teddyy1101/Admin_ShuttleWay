@@ -6,6 +6,7 @@ import { X, CalendarPlus, Clock, Users, Truck, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUsers } from '@/hooks/useUsers';
 import { useBuses } from '@/hooks/useBuses';
+import { tripService } from '@/services/tripService';
 
 interface BulkAssignModalProps {
   isOpen: boolean;
@@ -36,10 +37,9 @@ export default function BulkAssignModal({ isOpen, onClose, routeId, onSuccess }:
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch real data
-  const { users, isLoading: isLoadingUsers } = useUsers({ limit: 100 });
-  // Giả định role DRIVER sẽ được BE filter, tạm thời type User chưa có field role nên ta lấy toàn bộ hoặc những user active.
-  const drivers = users.filter(u => u.isActive); 
-  
+  const { users, isLoading: isLoadingUsers } = useUsers({ limit: 100, role: 'DRIVER' });
+  const drivers = users.filter(u => u.isActive);
+
   const { buses, isLoading: isLoadingBuses } = useBuses({ limit: 100 });
   const activeBuses = buses.filter(b => b.isActive);
 
@@ -56,40 +56,66 @@ export default function BulkAssignModal({ isOpen, onClose, routeId, onSuccess }:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.days.length === 0) {
       toast.error('Vui lòng chọn ít nhất một ngày trong tuần');
       return;
     }
-    
+
     if (!formData.driverId || !formData.busId) {
       toast.error('Vui lòng chọn tài xế và xe phân công');
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
-      // Mock API call since there's no tripService yet
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const payload = {
-        routeId,
-        month: formData.month,
-        days: formData.days,
-        time: formData.time,
-        driverId: formData.driverId,
-        busId: formData.busId,
-      };
-      
-      console.log('Bulk Assign Payload:', payload);
-      
+      const [year, month] = formData.month.split('-').map(Number);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const validDates: Date[] = [];
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const date = new Date(year, month - 1, i);
+        // getDay(): 0 is Sunday, 1 is Monday, ..., 6 is Saturday
+        if (formData.days.includes(date.getDay())) {
+          validDates.push(date);
+        }
+      }
+
+      const promises = validDates.map(date => {
+        const dateStr = [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, '0'),
+          String(date.getDate()).padStart(2, '0')
+        ].join('-');
+
+        let startTimeStr = undefined;
+        if (formData.time) {
+          startTimeStr = `${dateStr}T${formData.time}:00.000Z`; // Construct ISO datetime
+        }
+
+        return tripService.createTrip({
+          routeId,
+          busId: formData.busId,
+          driverId: formData.driverId,
+          scheduledDate: dateStr,
+          startTime: startTimeStr,
+        });
+      });
+
+      await Promise.all(promises);
+
       toast.success('Tạo lịch & phân công tháng thành công!');
       if (onSuccess) onSuccess();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('Có lỗi xảy ra khi tạo lịch');
+      const errorMsg = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo lịch';
+      if (Array.isArray(errorMsg)) {
+        toast.error(errorMsg.join(', '));
+      } else {
+        toast.error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -142,7 +168,7 @@ export default function BulkAssignModal({ isOpen, onClose, routeId, onSuccess }:
           {/* Form Body */}
           <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar">
             <form id="bulk-assign-form" onSubmit={handleSubmit} className="space-y-6">
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Month Picker */}
                 <div className="space-y-2">
@@ -190,8 +216,8 @@ export default function BulkAssignModal({ isOpen, onClose, routeId, onSuccess }:
                         onClick={() => handleDayToggle(day.value)}
                         className={`
                           py-2.5 px-1 rounded-xl text-sm font-medium transition-all shadow-sm
-                          ${isSelected 
-                            ? 'bg-blue-600 text-white border-transparent shadow-blue-500/20' 
+                          ${isSelected
+                            ? 'bg-blue-600 text-white border-transparent shadow-blue-500/20'
                             : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/10'}
                         `}
                       >
@@ -207,7 +233,7 @@ export default function BulkAssignModal({ isOpen, onClose, routeId, onSuccess }:
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
                   Phân công mặc định
                 </h3>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {/* Driver Select */}
                   <div className="space-y-2">

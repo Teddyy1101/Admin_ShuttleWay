@@ -9,6 +9,8 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { CalendarPlus, Clock, Truck, User as UserIcon } from 'lucide-react';
 import BulkAssignModal from './BulkAssignModal';
 import EditTripAssignmentModal from './EditTripAssignmentModal';
+import { useSWRConfig } from 'swr';
+import { useTrips } from '@/hooks/useTrips';
 
 const locales = {
   'vi': vi,
@@ -30,34 +32,56 @@ interface CustomEvent extends CalendarEvent {
   id: string;
   driverId?: string;
   busId?: string;
+  driverName?: string;
+  busPlate?: string;
   timeString: string;
   status: string;
 }
 
 const CustomEventRenderer = ({ event }: { event: CustomEvent }) => {
-  // Determine color based on status or simply use a default for scheduled
   let dotColor = 'bg-blue-500';
   if (event.status === 'COMPLETED') dotColor = 'bg-emerald-500';
   if (event.status === 'CANCELLED') dotColor = 'bg-red-500';
   if (event.status === 'IN_PROGRESS') dotColor = 'bg-amber-500';
 
   return (
-    <div className="flex items-center gap-1.5 px-1 py-0.5 text-xs font-medium text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors w-full">
-      <span className={`w-2 h-2 rounded-full ${dotColor} shadow-sm shrink-0`}></span>
-      <span className="truncate">{event.timeString}</span>
+    <div className="flex flex-col gap-0.5 px-1.5 py-1 text-xs text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors w-full border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800 shadow-sm">
+      <div className="flex items-center gap-1.5 font-medium">
+        <span className={`w-2 h-2 rounded-full ${dotColor} shadow-sm shrink-0`}></span>
+        <span className="truncate">{event.timeString}</span>
+      </div>
+      <div className="flex flex-col pl-3.5 text-[10px] text-gray-500 dark:text-gray-400">
+        <span className="truncate font-semibold text-gray-600 dark:text-gray-300">{event.driverName || 'Chưa phân công'}</span>
+        <span className="truncate">{event.busPlate || 'Xe: --'}</span>
+      </div>
     </div>
   );
 };
 
 export default function RouteTripsTab({ route }: RouteTripsTabProps) {
-  const trips = route.trips || [];
-  
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [calendarDate, setCalendarDate] = useState(new Date());
+  
+  // Dùng hook, route.id phải tồn tại
+  const { trips, isLoading, mutate: mutateTrips } = useTrips({
+    routeId: route?.id || '',
+    limit: 1000, 
+  });
   
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<CustomEvent | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const { mutate } = useSWRConfig();
+
+  const handleSuccess = () => {
+    // Re-fetch the route detail
+    mutate(`/routes/${route.id}`); 
+    mutateTrips(); // mutate ds trips
+    
+    if (route.routeCode) {
+      mutate(`/routes/${route.routeCode}`);
+    }
+  };
 
   const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -103,31 +127,34 @@ export default function RouteTripsTab({ route }: RouteTripsTabProps) {
       end: endDate,
       driverId: trip.driverId || undefined,
       busId: trip.busId || undefined,
+      driverName: trip.driver?.fullName,
+      busPlate: trip.bus?.licensePlate,
       timeString: formatTime(trip.startTime),
       status: trip.status
     };
   });
 
-  // Unique template for the summary table (Mock display based on existing trips or predefined template)
-  // For now, mapping unique start times to show a summary row
+  // Tạo danh sách mẫu cho bảng tóm tắt (dựa trên các chuyến đi hiện có, nhóm theo giờ khởi hành)
+  // Lấy ra các giờ khởi hành ngẫu nhiên làm mẫu (hiển thị tối đa 5 khung giờ)
   const summaryTemplates = Array.from(new Set(calendarEvents.map(e => e.timeString)))
-    .slice(0, 3) // Show max 3 for summary
+    .slice(0, 5) 
     .map(time => {
-      const associatedTrip = trips.find(t => formatTime(t.startTime) === time);
+      const associatedTrip = trips.find((t: Trip) => formatTime(t.startTime) === time);
       return {
         time,
         driver: associatedTrip?.driver?.fullName || 'Chưa phân công',
-        bus: associatedTrip?.bus?.licensePlate || 'Chưa xếp xe',
-        altDriver: '--', // Mặc định không có trong DB hiện tại
+        bus: associatedTrip?.bus?.licensePlate || 'Chưa phân công',
+        altDriver: '--', // Không được hỗ trợ trong DB hiện tại
         altBus: '--',
       };
     });
 
-  if (summaryTemplates.length === 0) {
-    // Fallback Mock Template if no trips exist
-    summaryTemplates.push(
-      { time: '05:45', driver: 'Nguyễn Văn A', bus: '29B-123.45', altDriver: 'Trần Văn B', altBus: '29B-678.90' },
-      { time: '13:30', driver: 'Lê Văn C', bus: '30F-555.55', altDriver: 'Phạm Thị D', altBus: '51B-888.88' },
+  if (!route?.id) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-500 dark:text-gray-400">Đang tải dữ liệu tuyến đường...</p>
+      </div>
     );
   }
 
@@ -155,7 +182,12 @@ export default function RouteTripsTab({ route }: RouteTripsTabProps) {
         </div>
 
         {/* Bảng (Table) Tóm tắt */}
-        <div className="p-0 sm:p-5 sm:pt-0 overflow-x-auto">
+        <div className="p-0 sm:p-5 sm:pt-0 overflow-x-auto relative min-h-[150px]">
+          {isLoading ? (
+             <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-800/50 z-10">
+               <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+             </div>
+          ) : null}
           <table className="w-full text-sm text-left border-collapse">
             <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400">
               <tr>
@@ -167,21 +199,29 @@ export default function RouteTripsTab({ route }: RouteTripsTabProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
-              {summaryTemplates.map((config, idx) => (
-                <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                    <span className="flex items-center gap-2"><Clock size={14} className="text-gray-400"/> {config.time}</span>
+              {summaryTemplates.length > 0 ? (
+                summaryTemplates.map((config, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                      <span className="flex items-center gap-2"><Clock size={14} className="text-gray-400"/> {config.time}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+                      <span className="flex items-center gap-2"><UserIcon size={14} className="text-gray-400"/> {config.driver}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+                      <span className="flex items-center gap-2"><Truck size={14} className="text-gray-400"/> {config.bus}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{config.altDriver}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{config.altBus}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 bg-gray-50/30 dark:bg-gray-800/20">
+                    Chưa có lịch trình phân công mẫu nào.
                   </td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
-                    <span className="flex items-center gap-2"><UserIcon size={14} className="text-gray-400"/> {config.driver}</span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
-                    <span className="flex items-center gap-2"><Truck size={14} className="text-gray-400"/> {config.bus}</span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{config.altDriver}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{config.altBus}</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -301,12 +341,14 @@ export default function RouteTripsTab({ route }: RouteTripsTabProps) {
         isOpen={isBulkOpen}
         onClose={() => setIsBulkOpen(false)}
         routeId={route.id}
+        onSuccess={handleSuccess}
       />
 
       <EditTripAssignmentModal
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
         tripData={selectedTrip}
+        onSuccess={handleSuccess}
       />
     </div>
   );

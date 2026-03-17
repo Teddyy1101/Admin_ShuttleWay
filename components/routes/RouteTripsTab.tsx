@@ -1,34 +1,76 @@
 'use client';
 
-import { Route } from '@/types/route';
-import { Calendar, User as UserIcon, Truck, CheckCircle2, Clock, XCircle, PlayCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Route, Trip } from '@/types/route';
+import { Calendar as BigCalendar, dateFnsLocalizer, Event as CalendarEvent } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { CalendarPlus, Clock, Truck, User as UserIcon } from 'lucide-react';
+import BulkAssignModal from './BulkAssignModal';
+import EditTripAssignmentModal from './EditTripAssignmentModal';
+
+const locales = {
+  'vi': vi,
+};
+
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
+  getDay,
+  locales,
+});
 
 interface RouteTripsTabProps {
   route: Route;
 }
 
+interface CustomEvent extends CalendarEvent {
+  id: string;
+  driverId?: string;
+  busId?: string;
+  timeString: string;
+  status: string;
+}
+
+const CustomEventRenderer = ({ event }: { event: CustomEvent }) => {
+  // Determine color based on status or simply use a default for scheduled
+  let dotColor = 'bg-blue-500';
+  if (event.status === 'COMPLETED') dotColor = 'bg-emerald-500';
+  if (event.status === 'CANCELLED') dotColor = 'bg-red-500';
+  if (event.status === 'IN_PROGRESS') dotColor = 'bg-amber-500';
+
+  return (
+    <div className="flex items-center gap-1.5 px-1 py-0.5 text-xs font-medium text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors w-full">
+      <span className={`w-2 h-2 rounded-full ${dotColor} shadow-sm shrink-0`}></span>
+      <span className="truncate">{event.timeString}</span>
+    </div>
+  );
+};
+
 export default function RouteTripsTab({ route }: RouteTripsTabProps) {
   const trips = route.trips || [];
+  
+  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState<CustomEvent | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return { label: 'Chuẩn bị', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: Clock };
-      case 'IN_PROGRESS':
-        return { label: 'Đang chạy', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: PlayCircle };
-      case 'COMPLETED':
-        return { label: 'Hoàn thành', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle2 };
-      case 'CANCELLED':
-        return { label: 'Đã hủy', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle };
-      default:
-        return { label: status, color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400', icon: Clock };
+  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSelectedMonth(val);
+    if (val) {
+      const [year, month] = val.split('-');
+      setCalendarDate(new Date(parseInt(year), parseInt(month) - 1, 1));
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const handleSelectEvent = (event: object) => {
+    setSelectedTrip(event as CustomEvent);
+    setIsEditOpen(true);
   };
 
   const formatTime = (timeString?: string | null) => {
@@ -38,70 +80,234 @@ export default function RouteTripsTab({ route }: RouteTripsTabProps) {
     return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
   };
 
-  if (trips.length === 0) {
-    return (
-      <div className="py-12 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800">
-        <Calendar size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-        <p>Tuyến đường này chưa có chuyến đi nào được lên lịch.</p>
-      </div>
+  // Convert Route Trips to Calendar Events
+  const calendarEvents: CustomEvent[] = trips.map((trip: Trip) => {
+    const startDate = new Date(trip.scheduledDate);
+    if (trip.startTime) {
+      const timeDate = new Date(trip.startTime);
+      startDate.setHours(timeDate.getHours(), timeDate.getMinutes());
+    }
+    
+    let endDate = new Date(startDate);
+    if (trip.endTime) {
+      const timeDate = new Date(trip.endTime);
+      endDate.setHours(timeDate.getHours(), timeDate.getMinutes());
+    } else {
+      endDate.setHours(startDate.getHours() + 2); // Default 2 hours if no end time
+    }
+
+    return {
+      id: trip.id,
+      title: formatTime(trip.startTime),
+      start: startDate,
+      end: endDate,
+      driverId: trip.driverId || undefined,
+      busId: trip.busId || undefined,
+      timeString: formatTime(trip.startTime),
+      status: trip.status
+    };
+  });
+
+  // Unique template for the summary table (Mock display based on existing trips or predefined template)
+  // For now, mapping unique start times to show a summary row
+  const summaryTemplates = Array.from(new Set(calendarEvents.map(e => e.timeString)))
+    .slice(0, 3) // Show max 3 for summary
+    .map(time => {
+      const associatedTrip = trips.find(t => formatTime(t.startTime) === time);
+      return {
+        time,
+        driver: associatedTrip?.driver?.fullName || 'Chưa phân công',
+        bus: associatedTrip?.bus?.licensePlate || 'Chưa xếp xe',
+        altDriver: '--', // Mặc định không có trong DB hiện tại
+        altBus: '--',
+      };
+    });
+
+  if (summaryTemplates.length === 0) {
+    // Fallback Mock Template if no trips exist
+    summaryTemplates.push(
+      { time: '05:45', driver: 'Nguyễn Văn A', bus: '29B-123.45', altDriver: 'Trần Văn B', altBus: '29B-678.90' },
+      { time: '13:30', driver: 'Lê Văn C', bus: '30F-555.55', altDriver: 'Phạm Thị D', altBus: '51B-888.88' },
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-      {trips.map((trip) => {
-        const StatusStruct = getStatusConfig(trip.status);
-        const StatusIcon = StatusStruct.icon;
-        
-        return (
-          <div key={trip.id} className="bg-white dark:bg-gray-800/50 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
-                  <Calendar size={18} />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Ngày chạy</p>
-                  <p className="font-bold text-gray-900 dark:text-white">{formatDate(trip.scheduledDate)}</p>
-                </div>
-              </div>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${StatusStruct.color}`}>
-                <StatusIcon size={12} />
-                {StatusStruct.label}
-              </span>
-            </div>
-            
-            <div className="space-y-3 mb-4">
-              <div className="flex justify-between text-sm py-2 border-b border-gray-50 dark:border-gray-800/50">
-                <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                  <Clock size={14} /> Giờ chạy
-                </span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {formatTime(trip.startTime)} {trip.endTime ? `- ${formatTime(trip.endTime)}` : ''}
-                </span>
-              </div>
-              
-              <div className="flex justify-between text-sm py-2 border-b border-gray-50 dark:border-gray-800/50">
-                <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                  <Truck size={14} /> Xe bus
-                </span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {trip.bus?.licensePlate || 'Chưa xếp xe'}
-                </span>
-              </div>
-              
-              <div className="flex justify-between text-sm py-2">
-                <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                  <UserIcon size={14} /> Tài xế
-                </span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {trip.driver?.fullName || 'Chưa phân công'}
-                </span>
-              </div>
-            </div>
+    <div className="space-y-6">
+      {/* Nửa trên (Kế hoạch & Cấu hình) */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+        {/* Thanh công cụ */}
+        <div className="p-5 border-b border-gray-100 dark:border-gray-700/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-1 items-center gap-4">
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+            />
+            <button
+              onClick={() => setIsBulkOpen(true)}
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm flex items-center gap-2"
+            >
+              <CalendarPlus size={18} />
+              Phân công tháng
+            </button>
           </div>
-        );
-      })}
+        </div>
+
+        {/* Bảng (Table) Tóm tắt */}
+        <div className="p-0 sm:p-5 sm:pt-0 overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400">
+              <tr>
+                <th className="px-4 py-3 font-medium rounded-tl-xl break-keep">Thời gian (Mẫu)</th>
+                <th className="px-4 py-3 font-medium">Tài xế chính</th>
+                <th className="px-4 py-3 font-medium">Xe chính</th>
+                <th className="px-4 py-3 font-medium">Tài xế dự phòng</th>
+                <th className="px-4 py-3 font-medium rounded-tr-xl">Xe dự phòng</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+              {summaryTemplates.map((config, idx) => (
+                <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                    <span className="flex items-center gap-2"><Clock size={14} className="text-gray-400"/> {config.time}</span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+                    <span className="flex items-center gap-2"><UserIcon size={14} className="text-gray-400"/> {config.driver}</span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+                    <span className="flex items-center gap-2"><Truck size={14} className="text-gray-400"/> {config.bus}</span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{config.altDriver}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{config.altBus}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Nửa dưới (Lịch thực tế) */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-5 h-[650px] route-calendar-wrapper">
+        <style dangerouslySetInnerHTML={{__html: `
+          .route-calendar-wrapper .rbc-calendar {
+            border: none;
+            font-family: inherit;
+          }
+          .route-calendar-wrapper .rbc-month-view {
+            border: 1px solid var(--fallback-bc, oklch(var(--b3)/0.2));
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border-color: #f3f4f6;
+          }
+          .dark .route-calendar-wrapper .rbc-month-view {
+            border-color: #374151;
+          }
+          .route-calendar-wrapper .rbc-header {
+            padding: 0.75rem 0.5rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            border-bottom: 1px solid #f3f4f6;
+            color: #6b7280;
+          }
+          .dark .route-calendar-wrapper .rbc-header {
+            border-bottom-color: #374151;
+            color: #9ca3af;
+          }
+          .route-calendar-wrapper .rbc-header + .rbc-header {
+            border-left: 1px solid #f3f4f6;
+          }
+          .dark .route-calendar-wrapper .rbc-header + .rbc-header {
+            border-left-color: #374151;
+          }
+          .route-calendar-wrapper .rbc-day-bg + .rbc-day-bg {
+            border-left: 1px solid #f3f4f6;
+          }
+          .dark .route-calendar-wrapper .rbc-day-bg + .rbc-day-bg {
+            border-left-color: #374151;
+          }
+          .route-calendar-wrapper .rbc-month-row + .rbc-month-row {
+            border-top: 1px solid #f3f4f6;
+          }
+          .dark .route-calendar-wrapper .rbc-month-row + .rbc-month-row {
+            border-top-color: #374151;
+          }
+          .route-calendar-wrapper .rbc-event {
+            background-color: transparent !important;
+            padding: 0;
+            border: none;
+            margin-bottom: 2px;
+          }
+          .route-calendar-wrapper .rbc-event:focus {
+            outline: none;
+          }
+          .route-calendar-wrapper .rbc-date-cell {
+            padding: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+          }
+          .route-calendar-wrapper .rbc-date-cell.rbc-now {
+            color: #2563eb;
+            font-weight: 700;
+          }
+          .dark .route-calendar-wrapper .rbc-date-cell.rbc-now {
+            color: #60a5fa;
+          }
+          .route-calendar-wrapper .rbc-off-range-bg {
+            background: #f9fafb;
+          }
+          .dark .route-calendar-wrapper .rbc-off-range-bg {
+            background: #1f2937;
+            opacity: 0.4;
+          }
+          .route-calendar-wrapper .rbc-today {
+            background-color: #eff6ff;
+          }
+          .dark .route-calendar-wrapper .rbc-today {
+            background-color: rgba(37, 99, 235, 0.1);
+          }
+        `}} />
+        <BigCalendar
+          localizer={localizer}
+          events={calendarEvents}
+          date={calendarDate}
+          onNavigate={(newDate) => setCalendarDate(newDate)}
+          views={['month']}
+          defaultView="month"
+          toolbar={false}
+          components={{
+            event: CustomEventRenderer,
+          }}
+          onSelectEvent={handleSelectEvent}
+          className="h-full"
+          messages={{
+            today: 'Hôm nay',
+            previous: 'Trở lại',
+            next: 'Tiếp theo',
+            month: 'Tháng',
+            week: 'Tuần',
+            day: 'Ngày',
+            agenda: 'Lịch trình',
+            date: 'Ngày',
+            time: 'Thời gian',
+            event: 'Sự kiện',
+            noEventsInRange: 'Không có sự kiện nào trong khoảng thời gian này.',
+          }}
+        />
+      </div>
+
+      {/* Modals */}
+      <BulkAssignModal
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        routeId={route.id}
+      />
+
+      <EditTripAssignmentModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        tripData={selectedTrip}
+      />
     </div>
   );
 }

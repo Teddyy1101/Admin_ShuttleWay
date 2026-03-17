@@ -31,17 +31,12 @@ interface RouteStationsTabProps {
 export default function RouteStationsTab({ route, mutate }: RouteStationsTabProps) {
   const { theme } = useTheme();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  
-  // State quản lý danh sách trạm phục vụ cho kéo thả
   const [localStations, setLocalStations] = useState<Station[]>([]);
   const [isSavingOrder, setIsSavingOrder] = useState(false);
-
-  // Khởi tạo và đồng bộ data gốc (Sắp xếp theo orderIndex)
   const originalStations = useMemo(() => {
     return [...(route.stations || [])].sort((a, b) => a.orderIndex - b.orderIndex);
   }, [route.stations]);
 
-  // Sync state tạm khi data gốc thay đổi
   useEffect(() => {
     setLocalStations(originalStations);
   }, [originalStations]);
@@ -177,7 +172,7 @@ export default function RouteStationsTab({ route, mutate }: RouteStationsTabProp
                     {/* Timeline dot */}
                     <div className="absolute -left-[11px] top-1.5 h-5 w-5 rounded-full bg-blue-500 border-4 border-white dark:border-gray-800 shadow-sm transition-transform group-active:scale-125" />
 
-                    <div className="bg-gray-50 dark:bg-gray-800/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700 transition-shadow hover:shadow-md">
+                    <div className="bg-white dark:bg-gray-800/80 p-3 rounded-l dark:border-gray-700 transition-shadow hover:shadow-md">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded mb-2 inline-block transition-colors ${
                         station.orderIndex !== index + 1 
                           ? 'text-orange-700 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/30' // Đổi màu nếu bị xê dịch

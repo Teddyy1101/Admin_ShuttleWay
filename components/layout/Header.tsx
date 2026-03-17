@@ -11,8 +11,15 @@ export default function Header() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { user, logout } = useAuth();
+  
+  // 1. Lấy thêm checkAuth và isLoading từ Zustand
+  const { user, logout, checkAuth, isLoading } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 2. Chạy checkAuth khi component mount (Khắc phục lỗi F5)
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   // Tránh lỗi hydration mismatch khi server render
   useEffect(() => {
@@ -98,74 +105,87 @@ export default function Header() {
 
         {/* User Profile Dropdown */}
         <div className="relative" ref={dropdownRef}>
-          <motion.div
-            whileHover={{ opacity: 0.8 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-3 cursor-pointer select-none"
-          >
-            {/* Avatar */}
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200/80 dark:bg-gray-800 text-gray-500 overflow-hidden relative">
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.fullName} className="h-full w-full object-cover" />
-              ) : (
-                <UserIcon size={26} className="mt-2 opacity-80" />
-              )}
+          {isLoading ? (
+            // 3. Hiệu ứng Skeleton Loading khi đang load data
+            <div className="flex items-center gap-3 py-1 px-2">
+              <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200 dark:bg-gray-800"></div>
+              <div className="hidden sm:flex flex-col gap-2">
+                <div className="h-3 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800"></div>
+                <div className="h-2 w-12 animate-pulse rounded bg-gray-200 dark:bg-gray-800"></div>
+              </div>
             </div>
-
-            {/* Name and Role */}
-            <div className="hidden sm:flex flex-col items-start leading-tight">
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 max-w-[120px] truncate">
-                {user?.fullName || 'Đang tải...'}
-              </span>
-              <span className="flex items-center gap-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-0.5">
-                <UserIcon size={10} />
-                {user?.role === 'ADMIN' ? 'Admin' : (user?.role || 'Admin')}
-              </span>
-            </div>
-
-            {/* Chevron */}
-            <ChevronDown size={14} className={`text-gray-500 transition-transform duration-300 ${isDropdownOpen ? '-rotate-180' : ''}`} />
-          </motion.div>
-
-          {/* Dropdown Menu */}
-          <AnimatePresence>
-            {isDropdownOpen && (
+          ) : (
+            <>
               <motion.div
-                initial={{ opacity: 0, y: -10, scaleY: 0.95 }}
-                animate={{ opacity: 1, y: 0, scaleY: 1 }}
-                exit={{ opacity: 0, y: -10, scaleY: 0.95 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                style={{ originY: 0 }}
-                className="rounded-lg absolute right-0 mt-3 w-56 transform overflow-hidden bg-white p-2 shadow-xl dark:bg-gray-900 border-t-1 border-gray-500"
+                whileHover={{ opacity: 0.8 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-3 cursor-pointer select-none"
               >
-                <div className="px-3 py-2 pb-3 border-b border-gray-100 dark:border-gray-800 mb-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.fullName}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                {/* Avatar */}
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 overflow-hidden relative font-bold">
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.fullName} className="h-full w-full object-cover" />
+                  ) : (
+                    // 4. Áp dụng hàm getUserInitials
+                    <span>{getUserInitials(user?.fullName || '')}</span>
+                  )}
                 </div>
-                <button
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    // Navigate to profile logic if needed: router.push('/profile')
-                  }}
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-                >
-                  <UserIcon size={16} className="text-gray-400 dark:text-gray-500" />
-                  Trang cá nhân
-                </button>
-                <button
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    logout();
-                  }}
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
-                >
-                  <LogOut size={16} className="text-red-500/80" />
-                  Đăng xuất
-                </button>
+
+                {/* Name and Role */}
+                <div className="hidden sm:flex flex-col items-start leading-tight">
+                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 max-w-[120px] truncate">
+                    {user?.fullName || 'Người dùng'}
+                  </span>
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-0.5">
+                    <UserIcon size={10} />
+                    {user?.role === 'ADMIN' ? 'Quản trị viên' : (user?.role || 'Admin')}
+                  </span>
+                </div>
+
+                {/* Chevron */}
+                <ChevronDown size={14} className={`text-gray-500 transition-transform duration-300 ${isDropdownOpen ? '-rotate-180' : ''}`} />
               </motion.div>
-            )}
-          </AnimatePresence>
+
+              {/* Dropdown Menu */}
+              <AnimatePresence>
+                {isDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scaleY: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                    exit={{ opacity: 0, y: -10, scaleY: 0.95 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    style={{ originY: 0 }}
+                    className="rounded-lg absolute right-0 mt-3 w-56 transform overflow-hidden bg-white p-2 shadow-xl dark:bg-gray-900 border border-gray-100 dark:border-gray-800"
+                  >
+                    <div className="px-3 py-2 pb-3 border-b border-gray-100 dark:border-gray-800 mb-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.fullName}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800 rounded-md"
+                    >
+                      <UserIcon size={16} className="text-gray-400 dark:text-gray-500" />
+                      Trang cá nhân
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        logout();
+                      }}
+                      className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 rounded-md mt-1"
+                    >
+                      <LogOut size={16} className="text-red-500/80" />
+                      Đăng xuất
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
         </div>
       </div>
     </header>

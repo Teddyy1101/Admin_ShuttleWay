@@ -33,6 +33,7 @@ export interface Trip {
   routeId: string;
   busId?: string | null;
   driverId?: string | null;
+  direction?: Direction;
   status: TripStatus;
   currentStation: number;
   scheduledDate: string;
@@ -57,7 +58,6 @@ export interface Route {
   id: string;
   routeCode: string;
   name: string;
-  direction: Direction;
   shiftType: ShiftType;
   estimatedTime: string;
   singlePrice: number;

@@ -92,7 +92,7 @@ export default function RouteDetailPage() {
 
         {/* Tabs */}
         <div className=" px-6 border-b border-gray-100 dark:border-gray-800 ">
-          <div className="flex overflow-x-auto no-scrollbar gap-8">
+          <div className="flex gap-8">
             {tabs.map(tab => {
               const isActive = activeTab === tab.id;
               return (

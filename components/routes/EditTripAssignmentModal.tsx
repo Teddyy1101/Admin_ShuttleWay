@@ -2,16 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Clock, Users, Truck, Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
+import { X, Save, Clock, Users, Truck, Calendar as CalendarIcon, AlertCircle, ArrowRightLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUsers } from '@/hooks/useUsers';
 import { useBuses } from '@/hooks/useBuses';
 import { tripService } from '@/services/tripService';
+import { Trip, Direction } from '@/types/route';
+
+// Kiểu dữ liệu cho tripData truyền từ component cha
+interface TripDataPayload extends Trip {
+  start: Date;
+  timeString: string;
+}
 
 interface EditTripAssignmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  tripData: any; // Using any for calendar event flexibility
+  tripData: TripDataPayload | null;
   onSuccess?: () => void;
 }
 
@@ -19,6 +26,8 @@ export default function EditTripAssignmentModal({ isOpen, onClose, tripData, onS
   const [formData, setFormData] = useState({
     driverId: '',
     busId: '',
+    startTime: '',
+    direction: Direction.PICK_UP as Direction,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +44,8 @@ export default function EditTripAssignmentModal({ isOpen, onClose, tripData, onS
       setFormData({
         driverId: tripData.driverId || '',
         busId: tripData.busId || '',
+        startTime: tripData.timeString || '',
+        direction: tripData.direction || Direction.PICK_UP,
       });
     }
   }, [tripData, isOpen]);
@@ -50,17 +61,30 @@ export default function EditTripAssignmentModal({ isOpen, onClose, tripData, onS
     setIsSubmitting(true);
     
     try {
-      const payload = {
+      // Xây dựng payload cập nhật
+      const payload: {
+        driverId: string;
+        busId: string;
+        direction: string;
+        startTime?: string;
+      } = {
         driverId: formData.driverId,
         busId: formData.busId,
+        direction: formData.direction,
       };
-      
-      await tripService.updateTrip(tripData.id, payload);
+
+      // Nếu có thay đổi giờ bắt đầu, chuyển thành ISO datetime
+      if (formData.startTime && tripData) {
+        const dateStr = tripData.scheduledDate.split('T')[0];
+        payload.startTime = `${dateStr}T${formData.startTime}:00.000Z`;
+      }
+
+      await tripService.updateTrip(tripData!.id, payload);
       
       toast.success('Cập nhật phân công thành công!');
       if (onSuccess) onSuccess();
       onClose();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
       toast.error('Có lỗi xảy ra khi cập nhật phân công');
     } finally {
@@ -122,10 +146,6 @@ export default function EditTripAssignmentModal({ isOpen, onClose, tripData, onS
                         <CalendarIcon size={14} className="opacity-70" />
                         Ngày: <strong className="font-medium text-blue-950 dark:text-white">{formatDate(tripData.start)}</strong>
                       </p>
-                      <p className="flex items-center gap-2">
-                        <Clock size={14} className="opacity-70" />
-                        Giờ chạy: <strong className="font-medium text-blue-950 dark:text-white">{tripData.timeString || 'N/A'}</strong>
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -133,6 +153,53 @@ export default function EditTripAssignmentModal({ isOpen, onClose, tripData, onS
             )}
 
             <form id="edit-assignment-form" onSubmit={handleSubmit} className="space-y-5">
+
+              {/* Giờ bắt đầu */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <Clock size={16} className="text-blue-500" />
+                  Giờ bắt đầu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="time"
+                  required
+                  value={formData.startTime}
+                  onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
+                />
+              </div>
+
+              {/* Hướng di chuyển */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <ArrowRightLeft size={16} className="text-indigo-500" />
+                  Hướng di chuyển <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, direction: Direction.PICK_UP }))}
+                    className={`py-2.5 px-4 rounded-xl text-sm font-semibold transition-all shadow-sm ${
+                      formData.direction === Direction.PICK_UP
+                        ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10'
+                    }`}
+                  >
+                    Chiều đi
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, direction: Direction.DROP_OFF }))}
+                    className={`py-2.5 px-4 rounded-xl text-sm font-semibold transition-all shadow-sm ${
+                      formData.direction === Direction.DROP_OFF
+                        ? 'bg-amber-500 text-white shadow-amber-500/20'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/10'
+                    }`}
+                  >
+                    Chiều về
+                  </button>
+                </div>
+              </div>
               
               {/* Driver Select */}
               <div className="space-y-2">

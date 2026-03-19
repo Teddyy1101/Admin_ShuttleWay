@@ -2,16 +2,17 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CalendarPlus, Clock, Users, Truck, Calendar } from 'lucide-react';
+import { X, CalendarPlus, Clock, Users, Truck, Calendar, ArrowRightLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUsers } from '@/hooks/useUsers';
 import { useBuses } from '@/hooks/useBuses';
 import { tripService } from '@/services/tripService';
+import { Route, Direction, ShiftType } from '@/types/route';
 
 interface BulkAssignModalProps {
   isOpen: boolean;
   onClose: () => void;
-  routeId: string;
+  route: Route;
   onSuccess?: () => void;
 }
 
@@ -25,11 +26,17 @@ const DAYS_OF_WEEK = [
   { value: 0, label: 'CN' },
 ];
 
-export default function BulkAssignModal({ isOpen, onClose, routeId, onSuccess }: BulkAssignModalProps) {
+export default function BulkAssignModal({ isOpen, onClose, route, onSuccess }: BulkAssignModalProps) {
+  // Xác định xem tuyến đường có phải ca chiều không
+  const isAfternoonShift = route.shiftType === ShiftType.AFTERNOON;
+  // Giờ mặc định: ca sáng = 06:00, ca chiều = 13:00
+  const defaultTime = isAfternoonShift ? '13:00' : '06:00';
+
   const [formData, setFormData] = useState({
     month: new Date().toISOString().slice(0, 7), // YYYY-MM
     days: [1, 2, 3, 4, 5], // Mặc định T2-T6
-    time: '06:00',
+    time: defaultTime,
+    direction: Direction.PICK_UP, // Mặc định chiều đón
     driverId: '',
     busId: '',
   });
@@ -95,9 +102,10 @@ export default function BulkAssignModal({ isOpen, onClose, routeId, onSuccess }:
         }
 
         return tripService.createTrip({
-          routeId,
+          routeId: route.id,
           busId: formData.busId,
           driverId: formData.driverId,
+          direction: formData.direction,
           scheduledDate: dateStr,
           startTime: startTimeStr,
         });
@@ -195,9 +203,54 @@ export default function BulkAssignModal({ isOpen, onClose, routeId, onSuccess }:
                     type="time"
                     required
                     value={formData.time}
-                    onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
+                    min={isAfternoonShift ? '12:00' : undefined}
+                    onChange={(e) => {
+                      const newTime = e.target.value;
+                      if (isAfternoonShift && newTime < '12:00') {
+                        toast.error('Ca chiều chỉ được chọn giờ từ 12:00 CH trở đi');
+                        return;
+                      }
+                      setFormData(prev => ({ ...prev, time: newTime }));
+                    }}
                     className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
                   />
+                  {isAfternoonShift && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Tuyến đường này thuộc ca chiều — chỉ chọn giờ từ 12:00 trở đi
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Chọn hướng: Chiều đi / Chiều về */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <ArrowRightLeft size={16} className="text-indigo-500" />
+                  Hướng chuyến <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, direction: Direction.PICK_UP }))}
+                    className={`py-2.5 px-4 rounded-xl text-sm font-semibold transition-all shadow-sm ${
+                      formData.direction === Direction.PICK_UP
+                        ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10'
+                    }`}
+                  >
+                    Chiều đi
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, direction: Direction.DROP_OFF }))}
+                    className={`py-2.5 px-4 rounded-xl text-sm font-semibold transition-all shadow-sm ${
+                      formData.direction === Direction.DROP_OFF
+                        ? 'bg-amber-500 text-white shadow-amber-500/20'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/10'
+                    }`}
+                  >
+                    Chiều về
+                  </button>
                 </div>
               </div>
 

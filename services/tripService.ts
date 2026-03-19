@@ -17,6 +17,7 @@ export const tripService = {
     routeId: string;
     busId?: string;
     driverId?: string;
+    direction: string;
     scheduledDate: string;
     startTime?: string;
   }) => {
@@ -27,6 +28,7 @@ export const tripService = {
     routeId?: string;
     busId?: string;
     driverId?: string;
+    direction?: string;
     scheduledDate?: string;
     startTime?: string;
   }) => {

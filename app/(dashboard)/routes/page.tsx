@@ -130,7 +130,7 @@ export default function RoutesPage() {
                           <div>
                             <div className="font-semibold text-gray-900 dark:text-gray-100">{route.name}</div>
                             <div className="text-xs text-gray-500">
-                              {route.shiftType === 'MORNING' ? 'Buổi sáng' : 'Buổi chiều'} - {route.direction === 'PICK_UP' ? 'Đón khách' : 'Trả khách'}
+                              {route.shiftType === 'MORNING' ? 'Buổi sáng' : 'Buổi chiều'}
                             </div>
                           </div>
                         </div>

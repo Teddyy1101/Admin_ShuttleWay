@@ -105,8 +105,20 @@ export interface GetStationsParams {
 
 // Payload gửi lên API khi cập nhật tuyến đường
 export interface UpdateRoutePayload {
+  name?: string;
+  shiftType?: ShiftType;
+  estimatedTime?: string;
   singlePrice?: number;
   monthlyPrice?: number;
   isActive?: boolean;
+}
+
+// Payload gửi lên API khi tạo tuyến đường mới
+export interface CreateRoutePayload {
+  name: string;
+  shiftType: ShiftType;
+  estimatedTime: string;
+  singlePrice: number;
+  monthlyPrice: number;
 }
 

@@ -13,7 +13,9 @@ import {
   isSameMonth, 
   isSameDay, 
   addMonths, 
-  subMonths 
+  subMonths,
+  addWeeks,
+  subWeeks 
 } from 'date-fns';
 import { CalendarPlus, User as UserIcon, ChevronLeft, ChevronRight, Edit, X } from 'lucide-react';
 import BulkAssignModal from './BulkAssignModal';
@@ -64,11 +66,18 @@ export default function RouteTripsTab({ route }: RouteTripsTabProps) {
   };
 
 
-  // Tạo mảng các ngày để render Calendar Grid (Từ thứ 2 đến Chủ nhật)
+  // Tạo mảng 7 ngày trong tuần hiện tại (Từ thứ 2 đến Chủ nhật)
+  const weekDays = useMemo(() => {
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start: weekStart, end: weekEnd });
+  }, [currentDate]);
+
+  // Tạo mảng các ngày để render Calendar Grid tháng (Từ thứ 2 đến Chủ nhật)
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Tuần bắt đầu từ T2
+    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
     const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
     return eachDayOfInterval({ start: startDate, end: endDate });
@@ -94,7 +103,7 @@ export default function RouteTripsTab({ route }: RouteTripsTabProps) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-5">
         <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
           <div className="flex bg-gray-100 dark:bg-gray-900/50 p-1 rounded-lg">
-            {['week', 'month', 'custom'].map((tab) => (
+            {['week', 'month'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -111,18 +120,40 @@ export default function RouteTripsTab({ route }: RouteTripsTabProps) {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-              <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="p-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+              {/* Nút điều hướng trái: lùi tuần hoặc tháng tùy tab */}
+              <button
+                onClick={() => setCurrentDate(
+                  activeTab === 'week' ? subWeeks(currentDate, 1) : subMonths(currentDate, 1)
+                )}
+                className="p-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
                 <ChevronLeft size={18} />
               </button>
-              <input
-                type="month"
-                value={currentMonthStr}
-                onChange={(e) => {
-                  if (e.target.value) setCurrentDate(new Date(e.target.value + '-01'));
-                }}
-                className="bg-transparent border-none px-2 py-2 text-sm font-semibold text-center outline-none w-[142px] cursor-pointer"
-              />
-              <button onClick={() => setCurrentDate(addMonths(currentDate, 1))} className="p-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+
+              {activeTab === 'week' ? (
+                /* Hiển thị khoảng thời gian tuần */
+                <span className="px-3 py-2 text-sm font-semibold text-center select-none min-w-[180px]">
+                  {format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'dd/MM')} – {format(endOfWeek(currentDate, { weekStartsOn: 1 }), 'dd/MM/yyyy')}
+                </span>
+              ) : (
+                /* Input chọn tháng */
+                <input
+                  type="month"
+                  value={currentMonthStr}
+                  onChange={(e) => {
+                    if (e.target.value) setCurrentDate(new Date(e.target.value + '-01'));
+                  }}
+                  className="bg-transparent border-none px-2 py-2 text-sm font-semibold text-center outline-none w-[142px] cursor-pointer"
+                />
+              )}
+
+              {/* Nút điều hướng phải: tiến tuần hoặc tháng tùy tab */}
+              <button
+                onClick={() => setCurrentDate(
+                  activeTab === 'week' ? addWeeks(currentDate, 1) : addMonths(currentDate, 1)
+                )}
+                className="p-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
                 <ChevronRight size={18} />
               </button>
             </div>
@@ -138,13 +169,14 @@ export default function RouteTripsTab({ route }: RouteTripsTabProps) {
         </div>
 
         {/* Calendar Grid */}
-        <div className="border border-gray-200 dark:border-gray-700 rounded-l overflow-hidden relative min-h-[400px]">
+        <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden relative min-h-[200px]">
           {isLoading && (
             <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
           
+          {/* Header các ngày trong tuần */}
           <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-700">
             {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(day => (
               <div key={day} className="py-3 text-center text-sm font-bold text-gray-600 dark:text-gray-300">
@@ -152,60 +184,119 @@ export default function RouteTripsTab({ route }: RouteTripsTabProps) {
               </div>
             ))}
           </div>
-          
-          <div className="grid grid-cols-7 bg-gray-200 dark:bg-gray-700 gap-[1px]">
-            {calendarDays.map((day, idx) => {
-              const isCurrentMonth = isSameMonth(day, currentDate);
-              const isSelected = isSameDay(day, selectedDate);
-              const dayTrips = trips.filter((t: Trip) => isSameDay(new Date(t.scheduledDate), day));
 
-              return (
-                <div
-                  key={idx}
-                  onClick={() => {
-                    setSelectedDate(day);
-                    // Mở modal chi tiết ngày khi click vào ô có chuyến
-                    const hasDayTrips = trips.filter((t: Trip) => isSameDay(new Date(t.scheduledDate), day)).length > 0;
-                    if (hasDayTrips) setIsDayDetailOpen(true);
-                  }}
-                  className={`min-h-[100px] p-2 bg-white dark:bg-gray-800 cursor-pointer transition-colors relative
-                    ${!isCurrentMonth ? 'opacity-40 bg-gray-50 dark:bg-gray-900' : 'hover:bg-blue-50/50 dark:hover:bg-blue-900/20'}
-                    ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/30' : ''}
-                  `}
-                >
-                  <div className={`text-right text-sm font-semibold mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
-                    {format(day, 'd')}
+          {activeTab === 'week' ? (
+            /* ===== CHẾ ĐỘ XEM TUẦN: chỉ hiển thị 7 ngày ===== */
+            <div className="grid grid-cols-7 bg-gray-200 dark:bg-gray-700 gap-[1px]">
+              {weekDays.map((day, idx) => {
+                const isToday = isSameDay(day, new Date());
+                const isSelected = isSameDay(day, selectedDate);
+                const dayTrips = trips.filter((t: Trip) => isSameDay(new Date(t.scheduledDate), day));
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setSelectedDate(day);
+                      // Mở modal chi tiết ngày khi click vào ô có chuyến
+                      if (dayTrips.length > 0) setIsDayDetailOpen(true);
+                    }}
+                    className={`min-h-[140px] p-2 bg-white dark:bg-gray-800 cursor-pointer transition-colors relative
+                      hover:bg-blue-50/50 dark:hover:bg-blue-900/20
+                      ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/30' : ''}
+                    `}
+                  >
+                    {/* Ngày + tháng */}
+                    <div className={`text-right text-sm font-semibold mb-2 ${
+                      isToday ? 'text-blue-600' : isSelected ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'
+                    }`}>
+                      {format(day, 'd/M')}
+                    </div>
+                    
+                    {/* Chấm màu + giờ: xanh lá = Chiều đi, cam = Chiều về */}
+                    <div className="flex flex-col gap-1.5 max-h-[100px] overflow-y-auto custom-scrollbar">
+                      {dayTrips
+                        .sort((a: Trip, b: Trip) => new Date(a.startTime || 0).getTime() - new Date(b.startTime || 0).getTime())
+                        .slice(0, 5)
+                        .map((trip: Trip) => (
+                            <div key={trip.id} className="flex items-center gap-1.5">
+                              {/* Chấm tròn nhỏ: xanh lá = Chiều đi, cam = Chiều về */}
+                              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                trip.direction === 'PICK_UP'
+                                  ? 'bg-emerald-500' 
+                                  : 'bg-amber-500'
+                              }`} />
+                              {/* Giờ khởi hành */}
+                              <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300">
+                                {formatTime(trip.startTime)}
+                              </span>
+                            </div>
+                        ))}
+                      {dayTrips.length > 5 && (
+                        <div className="text-[10px] text-gray-500 font-medium px-1">
+                          +{dayTrips.length - 5} chuyến
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  
-                  {/* Chấm màu + giờ: xanh lá = Chiều đi, cam = Chiều về */}
-                  <div className="flex flex-col gap-1.5 max-h-[80px] overflow-y-auto custom-scrollbar">
-                    {dayTrips
-                      .sort((a: Trip, b: Trip) => new Date(a.startTime || 0).getTime() - new Date(b.startTime || 0).getTime())
-                      .slice(0, 4)
-                      .map((trip: Trip) => (
-                          <div key={trip.id} className="flex items-center gap-1.5">
-                            {/* Chấm tròn nhỏ: xanh lá = Chiều đi, cam = Chiều về */}
-                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              trip.direction === 'PICK_UP'
-                                ? 'bg-emerald-500' 
-                                : 'bg-amber-500'
-                            }`} />
-                            {/* Giờ khởi hành */}
-                            <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300">
-                              {formatTime(trip.startTime)}
-                            </span>
-                          </div>
-                      ))}
-                    {dayTrips.length > 4 && (
-                      <div className="text-[10px] text-gray-500 font-medium px-1">
-                        +{dayTrips.length - 4} chuyến
-                      </div>
-                    )}
+                );
+              })}
+            </div>
+          ) : (
+            /* ===== CHẾ ĐỘ XEM THÁNG: hiển thị toàn bộ tháng ===== */
+            <div className="grid grid-cols-7 bg-gray-200 dark:bg-gray-700 gap-[1px]">
+              {calendarDays.map((day, idx) => {
+                const isCurrentMonth = isSameMonth(day, currentDate);
+                const isSelected = isSameDay(day, selectedDate);
+                const dayTrips = trips.filter((t: Trip) => isSameDay(new Date(t.scheduledDate), day));
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setSelectedDate(day);
+                      // Mở modal chi tiết ngày khi click vào ô có chuyến
+                      if (dayTrips.length > 0) setIsDayDetailOpen(true);
+                    }}
+                    className={`min-h-[100px] p-2 bg-white dark:bg-gray-800 cursor-pointer transition-colors relative
+                      ${!isCurrentMonth ? 'opacity-40 bg-gray-50 dark:bg-gray-900' : 'hover:bg-blue-50/50 dark:hover:bg-blue-900/20'}
+                      ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/30' : ''}
+                    `}
+                  >
+                    <div className={`text-right text-sm font-semibold mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-700 dark:text-gray-200'}`}>
+                      {format(day, 'd')}
+                    </div>
+                    
+                    {/* Chấm màu + giờ: xanh lá = Chiều đi, cam = Chiều về */}
+                    <div className="flex flex-col gap-1.5 max-h-[80px] overflow-y-auto custom-scrollbar">
+                      {dayTrips
+                        .sort((a: Trip, b: Trip) => new Date(a.startTime || 0).getTime() - new Date(b.startTime || 0).getTime())
+                        .slice(0, 4)
+                        .map((trip: Trip) => (
+                            <div key={trip.id} className="flex items-center gap-1.5">
+                              {/* Chấm tròn nhỏ: xanh lá = Chiều đi, cam = Chiều về */}
+                              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                trip.direction === 'PICK_UP'
+                                  ? 'bg-emerald-500' 
+                                  : 'bg-amber-500'
+                              }`} />
+                              {/* Giờ khởi hành */}
+                              <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300">
+                                {formatTime(trip.startTime)}
+                              </span>
+                            </div>
+                        ))}
+                      {dayTrips.length > 4 && (
+                        <div className="text-[10px] text-gray-500 font-medium px-1">
+                          +{dayTrips.length - 4} chuyến
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

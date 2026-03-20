@@ -8,19 +8,19 @@ import PageWrapper from '@/components/PageWrapper';
 import PageHeader from '@/components/PageHeader';
 import Pagination from '@/components/Pagination';
 import RouteEditModal from '@/components/routes/RouteEditModal';
+import RouteFormDrawer from '@/components/routes/RouteFormDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Eye, Route as RouteIcon, Tag, Edit } from 'lucide-react';
+import { Search, Eye, Route as RouteIcon, Tag, Edit, Plus } from 'lucide-react';
 
 import { useRoutes } from '@/hooks/useRoute';
 import { Route } from '@/types/route';
 
 const StatusBadge = ({ isActive }: { isActive: boolean }) => {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-      isActive 
-        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isActive
+        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
         : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-    }`}>
+      }`}>
       {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />}
       {!isActive && <span className="w-1.5 h-1.5 rounded-full bg-gray-500 mr-1.5" />}
       {isActive ? 'Hoạt động' : 'Tạm ngưng'}
@@ -33,6 +33,7 @@ export default function RoutesPage() {
   const { routes, total, page, limit, isLoading, params, updateFilters, changePage, mutate } = useRoutes({ page: 1, limit: 10 });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   const handleEditClick = (e: React.MouseEvent, route: Route) => {
     e.stopPropagation();
@@ -53,13 +54,22 @@ export default function RoutesPage() {
   return (
     <PageWrapper>
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-        <PageHeader 
+        <PageHeader
           title="Quản lý tuyến đường"
           breadcrumbs={[
             { label: 'Trang chủ', href: '/' },
             { label: 'Quản lý tuyến', href: '/routes' }
           ]}
         />
+        <motion.button
+          onClick={() => setIsCreateDrawerOpen(true)}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm shadow-blue-600/20"
+        >
+          <Plus size={18} />
+          <span>Thêm tuyến đường</span>
+        </motion.button>
       </div>
 
       <div className="bg-white rounded-l border border-gray-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden filter-container flex flex-col min-h-[calc(100vh-180px)]">
@@ -118,7 +128,7 @@ export default function RoutesPage() {
                       transition={{ duration: 0.2 }}
                       className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors group"
                     >
-                      <td 
+                      <td
                         className="px-6 py-4 whitespace-nowrap cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/30 transition-colors"
                         onClick={() => router.push(`/routes/${route.routeCode}`)}
                         title="Nhấn để xem chi tiết tuyến đường"
@@ -128,14 +138,14 @@ export default function RoutesPage() {
                             <RouteIcon size={20} />
                           </div>
                           <div>
-                            <div className="font-semibold text-gray-900 dark:text-gray-100">{route.name}</div>
+                            <div className="font-semibold text-gray-900 dark:text-gray-100">Tuyến: {route.name}</div>
                             <div className="text-xs text-gray-500">
                               {route.shiftType === 'MORNING' ? 'Buổi sáng' : 'Buổi chiều'}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td 
+                      <td
                         className="px-6 py-4 whitespace-nowrap cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/30 transition-colors"
                         onClick={() => router.push(`/routes/${route.routeCode}`)}
                         title="Nhấn để xem chi tiết tuyến đường"
@@ -144,7 +154,7 @@ export default function RoutesPage() {
                           {route.routeCode}
                         </span>
                       </td>
-                      <td 
+                      <td
                         className="px-6 py-4 whitespace-nowrap cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/30 transition-colors"
                         onClick={() => router.push(`/routes/${route.routeCode}`)}
                         title="Nhấn để xem chi tiết tuyến đường"
@@ -154,7 +164,7 @@ export default function RoutesPage() {
                           {formatPrice(route.singlePrice)}
                         </div>
                       </td>
-                      <td 
+                      <td
                         className="px-6 py-4 whitespace-nowrap cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/30 transition-colors"
                         onClick={() => router.push(`/routes/${route.routeCode}`)}
                         title="Nhấn để xem chi tiết tuyến đường"
@@ -164,7 +174,7 @@ export default function RoutesPage() {
                           {formatPrice(route.monthlyPrice)}
                         </div>
                       </td>
-                      <td 
+                      <td
                         className="px-6 py-4 whitespace-nowrap cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/30 transition-colors"
                         onClick={() => router.push(`/routes/${route.routeCode}`)}
                         title="Nhấn để xem chi tiết tuyến đường"
@@ -191,7 +201,7 @@ export default function RoutesPage() {
                   ))}
                 </AnimatePresence>
               )}
-              
+
               {!isLoading && routes.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
@@ -205,7 +215,7 @@ export default function RoutesPage() {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination Integration */}
         {total > 0 && (
           <Pagination
@@ -218,13 +228,20 @@ export default function RoutesPage() {
         )}
       </div>
 
-      <RouteEditModal 
+      <RouteEditModal
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
           setSelectedRoute(null);
         }}
         route={selectedRoute}
+        onSuccess={() => mutate()}
+      />
+
+      {/* Drawer tạo tuyến đường mới */}
+      <RouteFormDrawer
+        isOpen={isCreateDrawerOpen}
+        onClose={() => setIsCreateDrawerOpen(false)}
         onSuccess={() => mutate()}
       />
     </PageWrapper>

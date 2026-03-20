@@ -88,7 +88,7 @@ export default function RouteDetailPage() {
             <ArrowLeft size={18} className="text-gray-700 dark:text-gray-300" />
           </button>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-0">
-            Chi tiết tuyến {route.routeCode}
+            Chi tiết tuyến: {route.routeCode}
           </h1>
         </div>
 
@@ -129,7 +129,7 @@ export default function RouteDetailPage() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              {activeTab === 'INFO' && <RouteInfoTab route={route} />}
+              {activeTab === 'INFO' && <RouteInfoTab route={route} mutate={mutate} />}
               {activeTab === 'STATIONS' && <RouteStationsTab route={route} mutate={mutate} />}
               {activeTab === 'TRIPS' && <RouteTripsTab route={route} />}
               {activeTab === 'STUDENTS' && <RouteStudentsTab route={route} />}

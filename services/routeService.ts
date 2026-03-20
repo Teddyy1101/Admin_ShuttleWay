@@ -1,6 +1,6 @@
 import axiosClient from '@/lib/axiosClient';
 import { ApiResponse, PaginatedData } from '@/types/api';
-import { Route, GetRoutesParams, UpdateRoutePayload } from '@/types/route';
+import { Route, GetRoutesParams, CreateRoutePayload, UpdateRoutePayload } from '@/types/route';
 
 export const routeService = {
   // Lấy danh sách tuyến đường có phân trang và lọc
@@ -12,6 +12,12 @@ export const routeService = {
   // Lấy chi tiết tuyến đường theo mã tuyến (routeCode)
   getRouteByCode: async (routeCode: string): Promise<ApiResponse<Route>> => {
     const response = await axiosClient.get('/routes/' + routeCode);
+    return response.data;
+  },
+
+  // Tạo tuyến đường mới
+  createRoute: async (data: CreateRoutePayload): Promise<ApiResponse<Route>> => {
+    const response = await axiosClient.post('/routes', data);
     return response.data;
   },
 

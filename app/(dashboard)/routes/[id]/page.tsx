@@ -12,8 +12,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import RouteInfoTab from '@/components/routes/RouteInfoTab';
 import RouteStationsTab from '@/components/routes/RouteStationsTab';
 import RouteTripsTab from '@/components/routes/RouteTripsTab';
+import RouteStudentsTab from '@/components/routes/RouteStudentsTab';
 
-type TabId = 'INFO' | 'STATIONS' | 'TRIPS';
+type TabId = 'INFO' | 'STATIONS' | 'TRIPS' | 'STUDENTS';
 
 export default function RouteDetailPage() {
   const params = useParams();
@@ -27,6 +28,7 @@ export default function RouteDetailPage() {
     { id: 'INFO', label: 'Thông tin' },
     { id: 'STATIONS', label: 'Trạm dừng' },
     { id: 'TRIPS', label: 'Lịch trình' },
+    { id: 'STUDENTS', label: 'Học sinh' },
   ];
 
   if (isLoading) {
@@ -130,6 +132,7 @@ export default function RouteDetailPage() {
               {activeTab === 'INFO' && <RouteInfoTab route={route} />}
               {activeTab === 'STATIONS' && <RouteStationsTab route={route} mutate={mutate} />}
               {activeTab === 'TRIPS' && <RouteTripsTab route={route} />}
+              {activeTab === 'STUDENTS' && <RouteStudentsTab route={route} />}
             </motion.div>
           </AnimatePresence>
         </div>

@@ -15,7 +15,7 @@ import {
   addMonths, 
   subMonths 
 } from 'date-fns';
-import { CalendarPlus, Clock, Truck, User as UserIcon, ChevronLeft, ChevronRight, Edit, X } from 'lucide-react';
+import { CalendarPlus, User as UserIcon, ChevronLeft, ChevronRight, Edit, X } from 'lucide-react';
 import BulkAssignModal from './BulkAssignModal';
 import EditTripAssignmentModal from './EditTripAssignmentModal';
 import { useSWRConfig } from 'swr';

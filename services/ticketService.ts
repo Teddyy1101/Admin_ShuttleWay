@@ -14,4 +14,12 @@ export const ticketService = {
     const response = await axiosClient.patch(`/tickets/${id}/cancel`);
     return response.data;
   },
+
+  // Lấy lịch sử điểm danh của học sinh trên tuyến đường (5 chuyến gần nhất)
+  getAttendanceHistory: async (studentId: string, routeId: string) => {
+    const response = await axiosClient.get('/tickets/attendance-history', {
+      params: { studentId, routeId },
+    });
+    return response.data;
+  },
 };

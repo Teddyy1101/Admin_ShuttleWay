@@ -96,28 +96,19 @@ export default function RouteFormDrawer({ isOpen, onClose, onSuccess }: RouteFor
     setSelectedStations((prev) => prev.filter((s) => s.id !== stationId));
   };
 
-  // Submit: Tạo route → batch tạo stations
+  // Submit: Tạo route kèm danh sách trạm trong cùng 1 payload
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // Bước 1: Tạo tuyến đường mới
-      const routeRes = await routeService.createRoute(formData);
-      const newRouteId = routeRes.data?.id;
-
-      // Bước 2: Tạo các trạm dừng theo thứ tự đã sắp xếp
-      if (newRouteId && selectedStations.length > 0) {
-        const stationPromises = selectedStations.map((station, index) =>
-          stationService.createStation({
-            routeId: newRouteId,
-            name: station.name,
-            latitude: station.latitude,
-            longitude: station.longitude,
-            orderIndex: index + 1,
-          })
-        );
-        await Promise.all(stationPromises);
-      }
+      // Gửi payload kèm mảng stations (bảng trung gian RouteStation)
+      await routeService.createRoute({
+        ...formData,
+        stations: selectedStations.map((station, index) => ({
+          stationId: station.id,
+          orderIndex: index + 1,
+        })),
+      });
 
       toast.success('Tạo tuyến đường mới thành công!');
       onSuccess();

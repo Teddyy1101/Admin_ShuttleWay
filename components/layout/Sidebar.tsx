@@ -251,7 +251,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                       className="overflow-hidden ml-9 pl-2 border-l border-gray-100 dark:border-gray-800 mt-1 space-y-1"
                     >
                       {item.subItems!.map((sub) => {
-                        const isSubActive = pathname === sub.href;
+                        const isSubActive = pathname === sub.href || pathname.startsWith(sub.href + '/');
                         const SubIcon = sub.icon;
                         return (
                           <li key={sub.href}>

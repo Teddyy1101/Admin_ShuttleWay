@@ -148,7 +148,7 @@ export default function LeaveRequestsPage() {
       </div>
 
       {/* ====== Bảng dữ liệu chính ====== */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-900 rounded-l border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
         {/* Tabs lọc + Tìm kiếm */}
         <div className="border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-4 justify-between items-end px-4 pt-2">
           <div className="flex w-full sm:w-auto overflow-x-auto no-scrollbar gap-6">

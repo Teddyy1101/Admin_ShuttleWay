@@ -122,7 +122,6 @@ export default function StationsPage() {
                 <th className="px-6 py-4 font-semibold w-12">#</th>
                 <th className="px-6 py-4 font-semibold">Tên trạm</th>
                 <th className="px-6 py-4 font-semibold">Tọa độ</th>
-                <th className="px-6 py-4 font-semibold">Thứ tự</th>
                 <th className="px-6 py-4 font-semibold">Trạng thái</th>
                 <th className="px-6 py-4 text-right font-semibold">Thao tác</th>
               </tr>
@@ -135,7 +134,6 @@ export default function StationsPage() {
                     <td className="px-6 py-4"><div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-6" /></td>
                     <td className="px-6 py-4"><div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-40" /></td>
                     <td className="px-6 py-4"><div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-48" /></td>
-                    <td className="px-6 py-4"><div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-12" /></td>
                     <td className="px-6 py-4"><div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-20" /></td>
                     <td className="px-6 py-4"><div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-20 ml-auto" /></td>
                   </tr>
@@ -178,12 +176,6 @@ export default function StationsPage() {
                         </div>
                       </td>
 
-                      {/* Thứ tự */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm font-bold text-gray-700 dark:text-gray-300">
-                          {station.orderIndex}
-                        </span>
-                      </td>
 
                       {/* Trạng thái */}
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -251,7 +243,7 @@ export default function StationsPage() {
               {/* Trạng thái trống */}
               {!isLoading && filteredStations.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={5} className="px-6 py-16 text-center text-gray-500 dark:text-gray-400">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
                         <MapPin size={24} className="text-gray-300 dark:text-gray-600" />

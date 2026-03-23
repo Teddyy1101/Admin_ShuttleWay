@@ -45,9 +45,11 @@ export default function RouteInfoTab({ route, mutate }: RouteInfoTabProps) {
     return price.toLocaleString('vi-VN') + ' đ';
   };
 
-  const sortedStations = route.stations ? [...route.stations].sort((a, b) => a.orderIndex - b.orderIndex) : [];
+  const sortedStations = route.routeStations
+    ? [...route.routeStations].sort((a, b) => a.orderIndex - b.orderIndex)
+    : [];
   const routePath = sortedStations.length > 0
-    ? sortedStations.map(s => s.name).join(' → ')
+    ? sortedStations.map(rs => rs.station?.name).join(' → ')
     : 'Chưa cập nhật lộ trình';
 
   // Bắt đầu chỉnh sửa một trường

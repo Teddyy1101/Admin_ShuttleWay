@@ -15,17 +15,27 @@ export enum TripStatus {
   CANCELLED = 'CANCELLED',
 }
 
+// Trạm dừng — dữ liệu Master Data độc lập (không còn routeId, orderIndex)
 export interface Station {
   id: string;
-  routeId: string;
   name: string;
   latitude: number;
   longitude: number;
-  orderIndex: number;
-  estimatedMinutes?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// Bảng trung gian Route ↔ Station (chứa thứ tự trạm trên tuyến)
+export interface RouteStation {
+  orderIndex: number;
+  station: Station;
+}
+
+// Item gửi kèm khi tạo/cập nhật tuyến đường (mảng stations trong payload)
+export interface RouteStationItem {
+  stationId: string;
+  orderIndex: number;
 }
 
 export interface Trip {
@@ -66,8 +76,8 @@ export interface Route {
   createdAt: string;
   updatedAt: string;
   
-  // Relations mapped from ID
-  stations?: Station[];
+  // Quan hệ M:N qua bảng trung gian RouteStation
+  routeStations?: RouteStation[];
   trips?: Trip[];
 }
 
@@ -78,13 +88,11 @@ export interface GetRoutesParams {
   isActive?: boolean | string;
 }
 
-// Payload gửi lên API khi tạo trạm dừng mới
+// Payload gửi lên API khi tạo trạm dừng mới (Master Data độc lập)
 export interface CreateStationPayload {
-  routeId: string;
   name: string;
   latitude: number;
   longitude: number;
-  orderIndex: number;
 }
 
 // Payload gửi lên API khi cập nhật trạm dừng
@@ -92,12 +100,10 @@ export interface UpdateStationPayload {
   name?: string;
   latitude?: number;
   longitude?: number;
-  orderIndex?: number;
 }
 
 // Tham số query khi lấy danh sách trạm dừng
 export interface GetStationsParams {
-  routeId?: string;
   isActive?: boolean;
   page?: number;
   limit?: number;
@@ -111,6 +117,7 @@ export interface UpdateRoutePayload {
   singlePrice?: number;
   monthlyPrice?: number;
   isActive?: boolean;
+  stations?: RouteStationItem[];
 }
 
 // Payload gửi lên API khi tạo tuyến đường mới
@@ -120,5 +127,6 @@ export interface CreateRoutePayload {
   estimatedTime: string;
   singlePrice: number;
   monthlyPrice: number;
+  stations?: RouteStationItem[];
 }
 

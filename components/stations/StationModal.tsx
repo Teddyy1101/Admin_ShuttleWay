@@ -78,14 +78,11 @@ export default function StationModal({
           longitude: position[1],
         });
       } else {
-        // Tạo trạm dừng mới - routeId và orderIndex tạm mặc định
-        // Frontend sẽ cần bổ sung routeId khi tích hợp vào route
+        // Tạo trạm dừng mới — Master Data độc lập
         await onCreate({
-          routeId: '',
           name: name.trim(),
           latitude: position[0],
           longitude: position[1],
-          orderIndex: 1,
         });
       }
       onSuccess();

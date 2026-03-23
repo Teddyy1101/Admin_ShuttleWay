@@ -88,12 +88,22 @@ export default function BulkAssignModal({ isOpen, onClose, route, onSuccess }: B
       const daysInMonth = new Date(year, month, 0).getDate();
       const validDates: Date[] = [];
 
+      // Chỉ phân lịch cho ngày từ hôm nay trở đi
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       for (let i = 1; i <= daysInMonth; i++) {
         const date = new Date(year, month - 1, i);
-        // getDay(): 0 is Sunday, 1 is Monday, ..., 6 is Saturday
+        if (date < today) continue;
         if (formData.days.includes(date.getDay())) {
           validDates.push(date);
         }
+      }
+
+      if (validDates.length === 0) {
+        toast.error('Không có ngày hợp lệ nào trong tháng đã chọn (các ngày đã qua sẽ bị bỏ qua)');
+        setIsSubmitting(false);
+        return;
       }
 
       const promises = validDates.map(date => {

@@ -17,6 +17,19 @@ interface TripsResponse {
 }
 
 export const tripService = {
+  // Tạo chuyến đi mới (ADMIN)
+  createTrip: async (data: {
+    routeId: string;
+    busId: string;
+    driverId: string;
+    direction: string;
+    scheduledDate: string;
+    startTime?: string;
+  }) => {
+    const response = await axiosClient.post('/trips', data);
+    return response.data;
+  },
+
   // Lấy danh sách chuyến đi có phân trang và lọc
   getTrips: async (params?: GetTripsParams): Promise<TripsResponse> => {
     const response = await axiosClient.get('/trips', { params });

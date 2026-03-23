@@ -22,6 +22,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  MoreHorizontal,
 } from 'lucide-react';
 
 import { useTrips } from '@/hooks/useTrips';
@@ -218,6 +219,7 @@ export default function TripsPage() {
 
   // State modal đổi xe/tài xế
   const [swapTrip, setSwapTrip] = useState<TripListItem | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // State modal xác nhận hành động
   const [confirmAction, setConfirmAction] = useState<{
@@ -439,7 +441,7 @@ export default function TripsPage() {
                   </button>
                 </th>
                 <th className="px-5 py-4 font-semibold">Trạng thái</th>
-                <th className="px-5 py-4 text-right font-semibold">Hành động</th>
+                <th className="px-5 py-4 text-right font-semibold">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800 border-b border-gray-200 dark:border-gray-800">
@@ -525,50 +527,71 @@ export default function TripsPage() {
                         <TripStatusBadge status={trip.status} />
                       </td>
 
-                      {/* Hành động */}
+                      {/* Thao tác */}
                       <td className="px-5 py-4 whitespace-nowrap text-right" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1">
-                          {/* Xem chi tiết */}
+                        <div className="relative inline-block">
                           <button
-                            onClick={() => handleOpenDetail(trip)}
-                            className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
-                            title="Xem chi tiết / Điểm danh"
+                            onClick={() => setOpenMenuId(openMenuId === trip.id ? null : trip.id)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
                           >
-                            <Eye size={18} />
+                            <MoreHorizontal size={16} />
                           </button>
 
-                          {/* Đổi xe/tài xế (chỉ PENDING/IN_PROGRESS) */}
-                          {(trip.status === TripStatus.PENDING || trip.status === TripStatus.IN_PROGRESS) && (
-                            <button
-                              onClick={() => handleSwap(trip)}
-                              className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-colors"
-                              title="Đổi xe / Đổi tài xế"
-                            >
-                              <Users size={18} />
-                            </button>
-                          )}
+                          <AnimatePresence>
+                            {openMenuId === trip.id && (
+                              <>
+                                <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-40 overflow-hidden"
+                                >
+                                  {/* Xem chi tiết */}
+                                  <button
+                                    onClick={() => { handleOpenDetail(trip); setOpenMenuId(null); }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                  >
+                                    <Eye size={15} className="text-blue-500" />
+                                    Xem chi tiết
+                                  </button>
 
-                          {/* Kết thúc chuyến (chỉ IN_PROGRESS) */}
-                          {trip.status === TripStatus.IN_PROGRESS && (
-                            <button
-                              onClick={() => setConfirmAction({ type: 'complete', trip })}
-                              className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors"
-                              title="Kết thúc chuyến thủ công"
-                            >
-                              <CheckCircle2 size={18} />
-                            </button>
-                          )}
+                                  {/* Đổi xe/tài xế - chỉ PENDING/IN_PROGRESS */}
+                                  {(trip.status === TripStatus.PENDING || trip.status === TripStatus.IN_PROGRESS) && (
+                                    <button
+                                      onClick={() => { handleSwap(trip); setOpenMenuId(null); }}
+                                      className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                    >
+                                      <Users size={15} className="text-amber-500" />
+                                      Đổi xe / Tài xế
+                                    </button>
+                                  )}
 
-                          {/* Hủy chuyến (PENDING/IN_PROGRESS) */}
-                          {(trip.status === TripStatus.PENDING || trip.status === TripStatus.IN_PROGRESS) && (
-                            <button
-                              onClick={() => setConfirmAction({ type: 'cancel', trip })}
-                              className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors"
-                              title="Hủy chuyến đột xuất"
-                            >
-                              <XCircle size={18} />
-                            </button>
-                          )}
+                                  {/* Kết thúc chuyến - chỉ IN_PROGRESS */}
+                                  {trip.status === TripStatus.IN_PROGRESS && (
+                                    <button
+                                      onClick={() => { setConfirmAction({ type: 'complete', trip }); setOpenMenuId(null); }}
+                                      className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                                    >
+                                      <CheckCircle2 size={15} />
+                                      Kết thúc chuyến
+                                    </button>
+                                  )}
+
+                                  {/* Hủy chuyến - PENDING/IN_PROGRESS */}
+                                  {(trip.status === TripStatus.PENDING || trip.status === TripStatus.IN_PROGRESS) && (
+                                    <button
+                                      onClick={() => { setConfirmAction({ type: 'cancel', trip }); setOpenMenuId(null); }}
+                                      className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    >
+                                      <XCircle size={15} />
+                                      Hủy chuyến
+                                    </button>
+                                  )}
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </td>
                     </motion.tr>

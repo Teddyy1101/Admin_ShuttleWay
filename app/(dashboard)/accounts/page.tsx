@@ -22,6 +22,7 @@ import {
   Unlock,
   Phone,
   Link as LinkIcon,
+  MoreHorizontal,
 } from 'lucide-react';
 
 import { useUsers } from '@/hooks/useUsers';
@@ -79,6 +80,7 @@ export default function AccountsPage() {
   const [accountToEdit, setAccountToEdit] = useState<User | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFormLoading, setIsFormLoading] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const confirmDelete = async () => {
     if (accountToDelete) {
@@ -204,7 +206,7 @@ export default function AccountsPage() {
                 <th className="px-6 py-4 font-semibold">Vai trò</th>
                 <th className="px-6 py-4 font-semibold">Trạng thái</th>
                 <th className="px-6 py-4 font-semibold">Ngày Đăng ký</th>
-                <th className="px-6 py-4 text-right font-semibold">Hành động</th>
+                <th className="px-6 py-4 text-right font-semibold">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -289,36 +291,58 @@ export default function AccountsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {account.createdAt ? formatDateTime(account.createdAt) : 'Chưa tạo'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2 text-gray-400">
+                    {/* Thao tác */}
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="relative inline-block">
                         <button
-                          onClick={() => {
-                            setAccountToEdit(account);
-                            setIsDrawerOpen(true);
-                          }}
-                          className="p-2 rounded-lg hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors tooltip-trigger"
-                          title="Chỉnh sửa"
+                          onClick={() => setOpenMenuId(openMenuId === account.id ? null : account.id)}
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
                         >
-                          <Edit size={16} />
+                          <MoreHorizontal size={16} />
                         </button>
-                        <button
-                          onClick={() => toggleStatus(account)}
-                          className={`p-2 rounded-lg transition-colors tooltip-trigger ${
-                            account.isActive 
-                              ? 'hover:text-amber-600 hover:bg-amber-50 dark:hover:text-amber-400 dark:hover:bg-amber-900/30' 
-                              : 'hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30'
-                          }`}
-                          title={account.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-                        >
-                          {account.isActive ? <Lock size={16} /> : <Unlock size={16} />}
-                        </button>
-                        <button
-                          onClick={() => setAccountToDelete(account.id)}
-                          className="p-2 rounded-lg hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors tooltip-trigger"
-                          title="Xóa tài khoản"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+
+                        <AnimatePresence>
+                          {openMenuId === account.id && (
+                            <>
+                              <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-40 overflow-hidden"
+                              >
+                                {/* Chỉnh sửa */}
+                                <button
+                                  onClick={() => { setAccountToEdit(account); setIsDrawerOpen(true); setOpenMenuId(null); }}
+                                  className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                >
+                                  <Edit size={15} className="text-blue-500" />
+                                  Chỉnh sửa
+                                </button>
+                                {/* Khóa / Mở khóa */}
+                                <button
+                                  onClick={() => { toggleStatus(account); setOpenMenuId(null); }}
+                                  className={`flex items-center gap-2.5 w-full px-4 py-2.5 text-sm transition-colors ${
+                                    account.isActive
+                                      ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                      : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                                  }`}
+                                >
+                                  {account.isActive ? <Lock size={15} /> : <Unlock size={15} />}
+                                  {account.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                                </button>
+                                {/* Xóa tài khoản */}
+                                <button
+                                  onClick={() => { setAccountToDelete(account.id); setOpenMenuId(null); }}
+                                  className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                >
+                                  <Trash2 size={15} />
+                                  Xóa tài khoản
+                                </button>
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </td>
                   </motion.tr>

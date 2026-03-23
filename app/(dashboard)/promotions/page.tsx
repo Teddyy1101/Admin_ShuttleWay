@@ -19,7 +19,8 @@ import {
   Banknote,
   AlertTriangle,
   Filter,
-  FilterX
+  FilterX,
+  MoreHorizontal,
 } from 'lucide-react';
 import { usePromotions } from '@/hooks/usePromotions';
 import { Promotion, PromotionPayload, DiscountType } from '@/types/promotion';
@@ -90,6 +91,7 @@ export default function PromotionsPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Xử lý xác nhận xóa hoàn toàn
   const confirmDelete = async () => {
@@ -284,7 +286,7 @@ export default function PromotionsPage() {
                 <th className="px-6 py-4 font-semibold">Lượt sử dụng</th>
                 <th className="px-6 py-4 font-semibold">Hiệu lực</th>
                 <th className="px-6 py-4 font-semibold">Trạng thái</th>
-                <th className="px-6 py-4 text-right font-semibold">Hành động</th>
+                <th className="px-6 py-4 text-right font-semibold">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -364,36 +366,58 @@ export default function PromotionsPage() {
                         <ActiveBadge isActive={promo.isActive} />
                       </td>
 
-                      {/* Hành động */}
+                      {/* Thao tác */}
                       <td className="px-6 py-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-2 text-gray-400">
-                          {/* Nút chỉnh sửa */}
+                        <div className="relative inline-block">
                           <button
-                            onClick={() => { setPromoToEdit(promo); setIsDrawerOpen(true); }}
-                            className="p-2 rounded-lg hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
-                            title="Chỉnh sửa"
+                            onClick={() => setOpenMenuId(openMenuId === promo.id ? null : promo.id)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
                           >
-                            <Edit size={16} />
+                            <MoreHorizontal size={16} />
                           </button>
-                          {/* Nút bật/tắt trạng thái */}
-                          <button
-                            onClick={() => setPromoToToggle(promo)}
-                            className={`p-2 rounded-lg transition-colors ${promo.isActive
-                                ? 'hover:text-amber-600 hover:bg-amber-50 dark:hover:text-amber-400 dark:hover:bg-amber-900/30'
-                                : 'hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30'
-                              }`}
-                            title={promo.isActive ? 'Tắt khuyến mãi' : 'Bật khuyến mãi'}
-                          >
-                            {promo.isActive ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-                          </button>
-                          {/* Nút xóa */}
-                          <button
-                            onClick={() => setPromoToDelete(promo.id)}
-                            className="p-2 rounded-lg hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors"
-                            title="Xóa khuyến mãi"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+
+                          <AnimatePresence>
+                            {openMenuId === promo.id && (
+                              <>
+                                <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-40 overflow-hidden"
+                                >
+                                  {/* Chỉnh sửa */}
+                                  <button
+                                    onClick={() => { setPromoToEdit(promo); setIsDrawerOpen(true); setOpenMenuId(null); }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                  >
+                                    <Edit size={15} className="text-blue-500" />
+                                    Chỉnh sửa
+                                  </button>
+                                  {/* Bật/Tắt trạng thái */}
+                                  <button
+                                    onClick={() => { setPromoToToggle(promo); setOpenMenuId(null); }}
+                                    className={`flex items-center gap-2.5 w-full px-4 py-2.5 text-sm transition-colors ${
+                                      promo.isActive
+                                        ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                        : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                                    }`}
+                                  >
+                                    {promo.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+                                    {promo.isActive ? 'Tắt khuyến mãi' : 'Bật khuyến mãi'}
+                                  </button>
+                                  {/* Xóa */}
+                                  <button
+                                    onClick={() => { setPromoToDelete(promo.id); setOpenMenuId(null); }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                  >
+                                    <Trash2 size={15} />
+                                    Xóa khuyến mãi
+                                  </button>
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </td>
                     </motion.tr>

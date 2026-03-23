@@ -15,6 +15,7 @@ import {
   CirclePlay,
   MapPin,
   Navigation,
+  MoreHorizontal,
 } from 'lucide-react';
 import { useStations } from '@/hooks/useStations';
 import { Station } from '@/types/route';
@@ -39,6 +40,7 @@ export default function StationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [stationToToggle, setStationToToggle] = useState<Station | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Lọc danh sách theo tên trạm (client-side)
@@ -122,7 +124,7 @@ export default function StationsPage() {
                 <th className="px-6 py-4 font-semibold">Tọa độ</th>
                 <th className="px-6 py-4 font-semibold">Thứ tự</th>
                 <th className="px-6 py-4 font-semibold">Trạng thái</th>
-                <th className="px-6 py-4 text-right font-semibold">Hành động</th>
+                <th className="px-6 py-4 text-right font-semibold">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -195,27 +197,50 @@ export default function StationsPage() {
                         </span>
                       </td>
 
-                      {/* Hành động */}
+                      {/* Thao tác */}
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="relative inline-block">
                           <button
-                            onClick={() => handleOpenEdit(station)}
-                            className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
-                            title="Chỉnh sửa"
+                            onClick={() => setOpenMenuId(openMenuId === station.id ? null : station.id)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
                           >
-                            <Edit size={16} />
+                            <MoreHorizontal size={16} />
                           </button>
-                          <button
-                            onClick={() => setStationToToggle(station)}
-                            className={`p-2 rounded-lg text-gray-400 transition-colors ${
-                              station.isActive
-                                ? 'hover:text-amber-600 hover:bg-amber-50 dark:hover:text-amber-400 dark:hover:bg-amber-900/30'
-                                : 'hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30'
-                            }`}
-                            title={station.isActive ? 'Tạm dừng hoạt động' : 'Kích hoạt lại'}
-                          >
-                            {station.isActive ? <CirclePause size={16} /> : <CirclePlay size={16} />}
-                          </button>
+
+                          <AnimatePresence>
+                            {openMenuId === station.id && (
+                              <>
+                                <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-40 overflow-hidden"
+                                >
+                                  {/* Chỉnh sửa */}
+                                  <button
+                                    onClick={() => { handleOpenEdit(station); setOpenMenuId(null); }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                  >
+                                    <Edit size={15} className="text-blue-500" />
+                                    Chỉnh sửa
+                                  </button>
+                                  {/* Tạm dừng / Kích hoạt */}
+                                  <button
+                                    onClick={() => { setStationToToggle(station); setOpenMenuId(null); }}
+                                    className={`flex items-center gap-2.5 w-full px-4 py-2.5 text-sm transition-colors ${
+                                      station.isActive
+                                        ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                        : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                                    }`}
+                                  >
+                                    {station.isActive ? <CirclePause size={15} /> : <CirclePlay size={15} />}
+                                    {station.isActive ? 'Tạm dừng hoạt động' : 'Kích hoạt lại'}
+                                  </button>
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </td>
                     </motion.tr>

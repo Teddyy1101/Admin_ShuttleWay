@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Route } from '@/types/route';
 import { Ticket, TicketType, TicketStatus } from '@/types/ticket';
 import { useTickets } from '@/hooks/useTickets';
-import { Search, XCircle, Eye, User as UserIcon, Filter } from 'lucide-react';
+import { Search, XCircle, Eye, User as UserIcon, Filter, MoreHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import StudentDetailDrawer from './StudentDetailDrawer';
@@ -21,6 +21,7 @@ export default function RouteStudentsTab({ route }: RouteStudentsTabProps) {
   // State cho drawer chi tiết học sinh
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Lấy danh sách vé thuộc tuyến đường này
   const {
@@ -241,7 +242,7 @@ export default function RouteStudentsTab({ route }: RouteStudentsTabProps) {
                 <th className="px-5 py-3.5 font-semibold">Phụ huynh</th>
                 <th className="px-5 py-3.5 font-semibold">Loại vé</th>
                 <th className="px-5 py-3.5 font-semibold">Trạng thái</th>
-                <th className="px-5 py-3.5 font-semibold text-right">Hành động</th>
+                <th className="px-5 py-3.5 font-semibold text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -329,27 +330,48 @@ export default function RouteStudentsTab({ route }: RouteStudentsTabProps) {
                       </div>
                     </td>
 
-                    {/* Cột: Hành động */}
+                    {/* Thao tác */}
                     <td className="px-5 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Chỉ hiện nút Hủy vé khi status ACTIVE và chưa hết hạn theo ngày */}
-                        {ticket.status === 'ACTIVE' && new Date(ticket.validUntil) >= new Date() && (
-                          <button
-                            onClick={() => handleCancelTicket(ticket)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
-                            title="Hủy vé"
-                          >
-                            <XCircle size={14} />
-                            Hủy vé
-                          </button>
-                        )}
+                      <div className="relative inline-block">
                         <button
-                          onClick={() => openDrawer(ticket)}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
-                          title="Xem chi tiết"
+                          onClick={() => setOpenMenuId(openMenuId === ticket.id ? null : ticket.id)}
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
                         >
-                          <Eye size={16} />
+                          <MoreHorizontal size={16} />
                         </button>
+
+                        <AnimatePresence>
+                          {openMenuId === ticket.id && (
+                            <>
+                              <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-40 overflow-hidden"
+                              >
+                                {/* Xem chi tiết */}
+                                <button
+                                  onClick={() => { openDrawer(ticket); setOpenMenuId(null); }}
+                                  className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                >
+                                  <Eye size={15} className="text-blue-500" />
+                                  Xem chi tiết
+                                </button>
+                                {/* Hủy vé - chỉ hiện khi ACTIVE và chưa hết hạn */}
+                                {ticket.status === 'ACTIVE' && new Date(ticket.validUntil) >= new Date() && (
+                                  <button
+                                    onClick={() => { handleCancelTicket(ticket); setOpenMenuId(null); }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                  >
+                                    <XCircle size={15} />
+                                    Hủy vé
+                                  </button>
+                                )}
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </td>
                   </motion.tr>

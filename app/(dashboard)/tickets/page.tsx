@@ -17,7 +17,8 @@ import {
   Ban,
   CreditCard,
   Filter,
-  FilterX
+  FilterX,
+  MoreHorizontal,
 } from 'lucide-react';
 import { useTickets } from '@/hooks/useTickets';
 import { Ticket, TicketStatus, TicketType } from '@/types/ticket';
@@ -76,6 +77,7 @@ export default function TicketsPage() {
 
   const [ticketToCancel, setTicketToCancel] = useState<Ticket | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Xử lý xác nhận hủy vé
   const confirmCancel = async () => {
@@ -229,7 +231,7 @@ export default function TicketsPage() {
                 <th className="px-6 py-4 font-semibold">Giá mua</th>
                 <th className="px-6 py-4 font-semibold">Hiệu lực</th>
                 <th className="px-6 py-4 font-semibold">Trạng thái</th>
-                <th className="px-6 py-4 text-right font-semibold">Hành động</th>
+                <th className="px-6 py-4 text-right font-semibold">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -315,20 +317,43 @@ export default function TicketsPage() {
                         <StatusBadge status={ticket.status} />
                       </td>
 
-                      {/* Hành động */}
+                      {/* Thao tác */}
                       <td className="px-6 py-4 text-right whitespace-nowrap">
-                        {ticket.status === 'ACTIVE' ? (
+                        <div className="relative inline-block">
                           <button
-                            onClick={() => setTicketToCancel(ticket)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
-                            title="Hủy vé"
+                            onClick={() => setOpenMenuId(openMenuId === ticket.id ? null : ticket.id)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
                           >
-                            <XCircle size={14} />
-                            Hủy vé
+                            <MoreHorizontal size={16} />
                           </button>
-                        ) : (
-                          <span className="text-xs text-gray-400 italic">—</span>
-                        )}
+
+                          <AnimatePresence>
+                            {openMenuId === ticket.id && (
+                              <>
+                                <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-40 overflow-hidden"
+                                >
+                                  {/* Hủy vé - chỉ hiện khi ACTIVE */}
+                                  {ticket.status === 'ACTIVE' ? (
+                                    <button
+                                      onClick={() => { setTicketToCancel(ticket); setOpenMenuId(null); }}
+                                      className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    >
+                                      <XCircle size={15} />
+                                      Hủy vé
+                                    </button>
+                                  ) : (
+                                    <span className="block px-4 py-2.5 text-sm text-gray-400 italic">Không có thao tác</span>
+                                  )}
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </td>
                     </motion.tr>
                   ))}

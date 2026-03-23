@@ -14,7 +14,8 @@ import {
   Edit, 
   Trash2, 
   CheckCircle2, 
-  AlertTriangle 
+  AlertTriangle,
+  MoreHorizontal,
 } from 'lucide-react';
 import { useBuses } from '@/hooks/useBuses';
 import { Bus, BusStatus, CreateBusPayload, UpdateBusPayload } from '@/types/bus';
@@ -62,6 +63,7 @@ export default function BusesPage() {
   const [busToEdit, setBusToEdit] = useState<Bus | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFormLoading, setIsFormLoading] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const confirmDelete = async () => {
     if (busToDelete) {
@@ -116,7 +118,7 @@ export default function BusesPage() {
         </motion.button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+      <div className="bg-white rounded-l border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
         <div className="border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-4 justify-between items-end px-4 pt-2">
           <div className="flex w-full sm:w-auto overflow-x-auto no-scrollbar gap-6">
             {tabs.map(tab => (
@@ -160,7 +162,7 @@ export default function BusesPage() {
                 <th className="px-6 py-4 font-semibold">Tình trạng</th>
                 <th className="px-6 py-4 font-semibold">Khai thác</th>
                 <th className="px-6 py-4 font-semibold">Ngày thêm</th>
-                <th className="px-6 py-4 text-right font-semibold">Hành động</th>
+                <th className="px-6 py-4 text-right font-semibold">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -201,23 +203,46 @@ export default function BusesPage() {
                         <UsageBadge isActive={bus.isActive} />
                       </td>
                       <td className="px-6 py-4 text-sm">{formatDateTime(bus.createdAt)}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 text-gray-400">
-                          {/* Chỉ còn nút Sửa và Xóa */}
-                          <button 
-                            onClick={() => { setBusToEdit(bus); setIsDrawerOpen(true); }} 
-                            className="p-2 rounded-lg hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
-                            title="Chỉnh sửa"
+                      {/* Thao tác */}
+                      <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <div className="relative inline-block">
+                          <button
+                            onClick={() => setOpenMenuId(openMenuId === bus.id ? null : bus.id)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
                           >
-                            <Edit size={16} />
+                            <MoreHorizontal size={16} />
                           </button>
-                          <button 
-                            onClick={() => setBusToDelete(bus.id)} 
-                            className="p-2 rounded-lg hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors"
-                            title="Xóa xe"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+
+                          <AnimatePresence>
+                            {openMenuId === bus.id && (
+                              <>
+                                <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-40 overflow-hidden"
+                                >
+                                  {/* Chỉnh sửa */}
+                                  <button
+                                    onClick={() => { setBusToEdit(bus); setIsDrawerOpen(true); setOpenMenuId(null); }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                  >
+                                    <Edit size={15} className="text-blue-500" />
+                                    Chỉnh sửa
+                                  </button>
+                                  {/* Xóa xe */}
+                                  <button
+                                    onClick={() => { setBusToDelete(bus.id); setOpenMenuId(null); }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                  >
+                                    <Trash2 size={15} />
+                                    Xóa xe buýt
+                                  </button>
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </td>
                     </motion.tr>

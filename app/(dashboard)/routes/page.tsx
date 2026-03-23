@@ -10,7 +10,7 @@ import Pagination from '@/components/Pagination';
 import RouteEditModal from '@/components/routes/RouteEditModal';
 import RouteFormDrawer from '@/components/routes/RouteFormDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Eye, Route as RouteIcon, Tag, Edit, Plus } from 'lucide-react';
+import { Search, Eye, Route as RouteIcon, Tag, Edit, Plus, MoreHorizontal } from 'lucide-react';
 
 import { useRoutes } from '@/hooks/useRoute';
 import { Route } from '@/types/route';
@@ -34,6 +34,7 @@ export default function RoutesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const handleEditClick = (e: React.MouseEvent, route: Route) => {
     e.stopPropagation();
@@ -102,7 +103,7 @@ export default function RoutesPage() {
                 <th className="px-6 py-4 font-semibold">Giá vé lượt</th>
                 <th className="px-6 py-4 font-semibold">Giá vé tháng</th>
                 <th className="px-6 py-4 font-semibold">Trạng thái</th>
-                <th className="px-6 py-4 text-right font-semibold">Hành động</th>
+                <th className="px-6 py-4 text-right font-semibold">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800 border-b border-gray-200 dark:border-gray-800">
@@ -181,21 +182,47 @@ export default function RoutesPage() {
                       >
                         <StatusBadge isActive={route.isActive} />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link
-                          href={`/routes/${route.routeCode}`}
-                          className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
-                          title="Xem chi tiết"
-                        >
-                          <Eye size={18} />
-                        </Link>
-                        <button
-                          onClick={(e) => handleEditClick(e, route)}
-                          className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-colors ml-2"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit size={18} />
-                        </button>
+                      {/* Thao tác */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="relative inline-block">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === route.id ? null : route.id); }}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
+                          >
+                            <MoreHorizontal size={16} />
+                          </button>
+
+                          <AnimatePresence>
+                            {openMenuId === route.id && (
+                              <>
+                                <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-40 overflow-hidden"
+                                >
+                                  {/* Xem chi tiết */}
+                                  <button
+                                    onClick={() => { router.push(`/routes/${route.routeCode}`); setOpenMenuId(null); }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                  >
+                                    <Eye size={15} className="text-blue-500" />
+                                    Xem chi tiết
+                                  </button>
+                                  {/* Chỉnh sửa */}
+                                  <button
+                                    onClick={(e) => { handleEditClick(e, route); setOpenMenuId(null); }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                  >
+                                    <Edit size={15} className="text-amber-500" />
+                                    Chỉnh sửa
+                                  </button>
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </td>
                     </motion.tr>
                   ))}

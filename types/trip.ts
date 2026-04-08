@@ -131,3 +131,22 @@ export interface AdminAttendancePayload {
   studentId: string;
   status: AttendanceStatus;
 }
+
+// Item học sinh tại trạm (dùng cho API lấy danh sách đón/trả)
+export interface StationStudentItem {
+  attendanceId: string;
+  status: AttendanceStatus;
+  boardedAt?: string | null;
+  student: UserBrief;
+}
+
+// Response API lấy danh sách học sinh tại trạm
+export interface StationStudentsResponse {
+  station: {
+    id: string;
+    name: string;
+    orderIndex: number;
+  };
+  studentsToPickUp: StationStudentItem[];
+  studentsToDropOff: StationStudentItem[];
+}

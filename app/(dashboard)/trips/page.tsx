@@ -272,6 +272,7 @@ export default function TripsPage() {
       return new Date(dateStr).toLocaleTimeString('vi-VN', {
         hour: '2-digit',
         minute: '2-digit',
+        timeZone: 'UTC'
       });
     } catch {
       return '—';

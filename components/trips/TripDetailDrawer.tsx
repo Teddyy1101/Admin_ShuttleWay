@@ -14,6 +14,9 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Users,
 } from 'lucide-react';
 import { useTripDetail } from '@/hooks/useTripDetail';
 import { tripService } from '@/services/tripService';
@@ -22,6 +25,7 @@ import {
   AttendanceStatus,
   TripAttendanceItem,
   Direction,
+  StationStudentsResponse,
 } from '@/types/trip';
 import toast from 'react-hot-toast';
 
@@ -77,6 +81,9 @@ export default function TripDetailDrawer({ isOpen, tripId, onClose, onDataChange
   const { tripDetail, isLoading, mutate } = useTripDetail(isOpen ? tripId : null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
+  const [stationStudents, setStationStudents] = useState<StationStudentsResponse | null>(null);
+  const [isLoadingStation, setIsLoadingStation] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Đóng dropdown khi click bên ngoài
@@ -89,6 +96,40 @@ export default function TripDetailDrawer({ isOpen, tripId, onClose, onDataChange
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Reset state khi đóng drawer
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedStationId(null);
+      setStationStudents(null);
+    }
+  }, [isOpen]);
+
+  // Lấy danh sách học sinh tại trạm khi chọn trạm
+  const handleStationClick = async (stationId: string) => {
+    if (!tripId) return;
+
+    // Toggle nếu đã chọn trạm này
+    if (selectedStationId === stationId) {
+      setSelectedStationId(null);
+      setStationStudents(null);
+      return;
+    }
+
+    setSelectedStationId(stationId);
+    setIsLoadingStation(true);
+    try {
+      const response = await tripService.getStudentsAtStation(tripId, stationId);
+      setStationStudents(response.data);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || 'Lỗi khi tải danh sách học sinh tại trạm');
+      setSelectedStationId(null);
+      setStationStudents(null);
+    } finally {
+      setIsLoadingStation(false);
+    }
+  };
 
   // Xử lý cập nhật điểm danh thủ công
   const handleUpdateAttendance = async (attendance: TripAttendanceItem, newStatus: AttendanceStatus) => {
@@ -103,6 +144,11 @@ export default function TripDetailDrawer({ isOpen, tripId, onClose, onDataChange
       toast.success(`Đã cập nhật trạng thái: ${attendanceConfig[newStatus].label}`);
       mutate();
       onDataChanged();
+      // Refresh station students nếu đang xem
+      if (selectedStationId) {
+        const response = await tripService.getStudentsAtStation(tripId, selectedStationId);
+        setStationStudents(response.data);
+      }
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       toast.error(error.response?.data?.message || 'Lỗi cập nhật điểm danh');
@@ -153,7 +199,7 @@ export default function TripDetailDrawer({ isOpen, tripId, onClose, onDataChange
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-screen w-full sm:w-[520px] bg-white dark:bg-gray-900 shadow-2xl z-50 flex flex-col"
+            className="fixed top-0 right-0 h-screen w-full sm:w-[580px] bg-white dark:bg-gray-900 shadow-2xl z-50 flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
@@ -246,31 +292,175 @@ export default function TripDetailDrawer({ isOpen, tripId, onClose, onDataChange
                     </div>
 
                     {/* Trạm hiện tại (chỉ hiện khi IN_PROGRESS) */}
-                    {tripDetail.status === TripStatus.IN_PROGRESS && tripDetail.route.stations.length > 0 && (
+                    {tripDetail.status === TripStatus.IN_PROGRESS && (tripDetail.route.stations?.length ?? 0) > 0 && (
                       <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-2 text-sm">
                           <MapPin size={14} className="text-blue-500" />
                           <span className="text-gray-500">Trạm hiện tại:</span>
                           <span className="font-semibold text-blue-600 dark:text-blue-400">
-                            {tripDetail.route.stations[tripDetail.currentStation]?.name || `Trạm ${tripDetail.currentStation + 1}`}
+                            {tripDetail.route.stations?.[tripDetail.currentStation]?.name || `Trạm ${tripDetail.currentStation + 1}`}
                           </span>
                           <span className="text-xs text-gray-400">
-                            ({tripDetail.currentStation + 1}/{tripDetail.route.stations.length})
+                            ({tripDetail.currentStation + 1}/{tripDetail.route.stations?.length})
                           </span>
                         </div>
                       </div>
                     )}
                   </div>
 
+                  {/* Danh sách trạm dừng — click để xem học sinh đón/trả */}
+                  {(tripDetail.route.stations?.length ?? 0) > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                        <MapPin size={14} className="text-blue-500" />
+                        Trạm dừng ({tripDetail.route.stations?.length})
+                        <span className="text-xs font-normal text-gray-400">— Nhấn để xem học sinh</span>
+                      </h3>
+                      <div className="space-y-1.5">
+                        {tripDetail.route.stations?.map((station, index) => {
+                          const isSelected = selectedStationId === station.id;
+                          const isCurrent = tripDetail.status === TripStatus.IN_PROGRESS && tripDetail.currentStation === index;
+
+                          return (
+                            <div key={station.id}>
+                              <button
+                                onClick={() => handleStationClick(station.id)}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
+                                  isSelected
+                                    ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+                                    : 'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent'
+                                }`}
+                              >
+                                {/* Số thứ tự */}
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                                  isCurrent
+                                    ? 'bg-blue-500 text-white ring-2 ring-blue-300 dark:ring-blue-600 animate-pulse'
+                                    : isSelected
+                                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                                      : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                                }`}>
+                                  {index + 1}
+                                </div>
+
+                                {/* Tên trạm */}
+                                <span className={`flex-1 text-left truncate ${
+                                  isSelected
+                                    ? 'font-semibold text-blue-700 dark:text-blue-300'
+                                    : 'text-gray-700 dark:text-gray-300'
+                                }`}>
+                                  {station.name}
+                                </span>
+
+                                {/* Icon chỉ trạm hiện tại */}
+                                {isCurrent && (
+                                  <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Đang tại đây</span>
+                                )}
+
+                                <ChevronDown
+                                  size={14}
+                                  className={`text-gray-400 transition-transform duration-200 ${isSelected ? 'rotate-180' : ''}`}
+                                />
+                              </button>
+
+                              {/* Danh sách học sinh tại trạm (mở rộng) */}
+                              <AnimatePresence>
+                                {isSelected && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="ml-9 mt-1.5 mb-2 p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                                      {isLoadingStation ? (
+                                        <div className="flex items-center justify-center py-4">
+                                          <Loader2 size={20} className="animate-spin text-blue-500" />
+                                        </div>
+                                      ) : stationStudents ? (
+                                        <div className="space-y-3">
+                                          {/* Học sinh cần đón */}
+                                          <div>
+                                            <div className="flex items-center gap-1.5 mb-2">
+                                              <ArrowUpCircle size={13} className="text-emerald-500" />
+                                              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                                                Cần đón ({stationStudents.studentsToPickUp.length})
+                                              </span>
+                                            </div>
+                                            {stationStudents.studentsToPickUp.length > 0 ? (
+                                              <div className="space-y-1.5">
+                                                {stationStudents.studentsToPickUp.map((item) => (
+                                                  <div key={item.attendanceId} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/10">
+                                                    <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                                                      {item.student.fullName.charAt(0)}
+                                                    </div>
+                                                    <span className="text-xs font-medium text-gray-800 dark:text-gray-200 flex-1 truncate">
+                                                      {item.student.fullName}
+                                                    </span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                                      {attendanceConfig[item.status].label}
+                                                    </span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ) : (
+                                              <p className="text-xs text-gray-400 italic pl-5">Không có</p>
+                                            )}
+                                          </div>
+
+                                          {/* Đường phân cách */}
+                                          <div className="border-t border-gray-100 dark:border-gray-800" />
+
+                                          {/* Học sinh cần trả */}
+                                          <div>
+                                            <div className="flex items-center gap-1.5 mb-2">
+                                              <ArrowDownCircle size={13} className="text-orange-500" />
+                                              <span className="text-xs font-semibold text-orange-700 dark:text-orange-400">
+                                                Cần trả ({stationStudents.studentsToDropOff.length})
+                                              </span>
+                                            </div>
+                                            {stationStudents.studentsToDropOff.length > 0 ? (
+                                              <div className="space-y-1.5">
+                                                {stationStudents.studentsToDropOff.map((item) => (
+                                                  <div key={item.attendanceId} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/10">
+                                                    <div className="w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-xs font-bold text-orange-700 dark:text-orange-400">
+                                                      {item.student.fullName.charAt(0)}
+                                                    </div>
+                                                    <span className="text-xs font-medium text-gray-800 dark:text-gray-200 flex-1 truncate">
+                                                      {item.student.fullName}
+                                                    </span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                                      {attendanceConfig[item.status].label}
+                                                    </span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ) : (
+                                              <p className="text-xs text-gray-400 italic pl-5">Không có</p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Bản đồ (chỉ hiện khi IN_PROGRESS và có stations) */}
-                  {tripDetail.status === TripStatus.IN_PROGRESS && tripDetail.route.stations.length > 0 && (
+                  {tripDetail.status === TripStatus.IN_PROGRESS && (tripDetail.route.stations?.length ?? 0) > 0 && (
                     <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Vị trí trạm dừng</h3>
                       <div className="bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden h-48 flex items-center justify-center">
                         <div className="text-center text-gray-500 dark:text-gray-400">
                           <MapPin size={32} className="mx-auto mb-2 text-blue-400" />
                           <p className="text-sm">Đang theo dõi vị trí...</p>
-                          <p className="text-xs mt-1">Trạm: {tripDetail.route.stations[tripDetail.currentStation]?.name}</p>
+                          <p className="text-xs mt-1">Trạm: {tripDetail.route.stations?.[tripDetail.currentStation]?.name}</p>
                         </div>
                       </div>
                     </div>
@@ -279,7 +469,8 @@ export default function TripDetailDrawer({ isOpen, tripId, onClose, onDataChange
                   {/* Danh sách điểm danh */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <Users size={14} className="text-indigo-500" />
                         Danh sách điểm danh ({tripDetail.attendances.length})
                       </h3>
                       {canManualAttendance && (

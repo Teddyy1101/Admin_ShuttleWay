@@ -19,6 +19,8 @@ import {
   Filter,
   FilterX,
   MoreHorizontal,
+  ArrowUpCircle,
+  UserCircle,
 } from 'lucide-react';
 import { useTickets } from '@/hooks/useTickets';
 import { Ticket, TicketStatus, TicketType } from '@/types/ticket';
@@ -49,6 +51,18 @@ const TicketTypeBadge = ({ type }: { type: 'MONTHLY' | 'SINGLE_TRIP' }) => {
       {isMonthly ? 'Vé tháng' : 'Vé lượt'}
     </span>
   );
+};
+
+// Tính trạng thái hiển thị thực tế (fix vé quá hạn nhưng cron chưa chạy)
+const getDisplayStatus = (ticket: Ticket): TicketStatus => {
+  if (ticket.status === 'ACTIVE' && ticket.validUntil) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const until = new Date(ticket.validUntil);
+    until.setHours(0, 0, 0, 0);
+    if (until < today) return 'EXPIRED';
+  }
+  return ticket.status;
 };
 
 // Huy hiệu trạng thái vé
@@ -225,8 +239,9 @@ export default function TicketsPage() {
             <thead className="bg-gray-50/50 dark:bg-gray-800/50 text-xs uppercase text-gray-700 dark:text-gray-300">
               <tr>
                 <th className="px-6 py-4 font-semibold">Học sinh</th>
-                <th className="px-6 py-4 font-semibold">Phụ huynh</th>
+                <th className="px-6 py-4 font-semibold">Người đặt</th>
                 <th className="px-6 py-4 font-semibold">Tuyến xe</th>
+                <th className="px-6 py-4 font-semibold">Điểm đón</th>
                 <th className="px-6 py-4 font-semibold">Loại vé</th>
                 <th className="px-6 py-4 font-semibold">Giá mua</th>
                 <th className="px-6 py-4 font-semibold">Hiệu lực</th>
@@ -242,6 +257,7 @@ export default function TicketsPage() {
                     <td className="px-6 py-4"><div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-full"></div></td>
                     <td className="px-6 py-4"><div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24"></div></td>
                     <td className="px-6 py-4"><div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-28"></div></td>
+                    <td className="px-6 py-4"><div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-36"></div></td>
                     <td className="px-6 py-4"><div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-20"></div></td>
                     <td className="px-6 py-4"><div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24"></div></td>
                     <td className="px-6 py-4"><div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32"></div></td>
@@ -271,12 +287,17 @@ export default function TicketsPage() {
                         </div>
                       </td>
 
-                      {/* Phụ huynh */}
+                      {/* Người đặt */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         {ticket.parent ? (
-                          <span className="text-gray-700 dark:text-gray-300">{ticket.parent.fullName}</span>
+                          <div className="flex items-center gap-2">
+                            <UserCircle size={14} className="text-blue-400 flex-shrink-0" />
+                            <span className="text-gray-700 dark:text-gray-300">{ticket.parent.fullName}</span>
+                          </div>
                         ) : (
-                          <span className="text-xs text-gray-400 italic">Không có</span>
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
+                            Tự đặt
+                          </span>
                         )}
                       </td>
 
@@ -288,6 +309,20 @@ export default function TicketsPage() {
                             {ticket.route.name}
                           </span>
                         </div>
+                      </td>
+
+                      {/* Điểm đón */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {ticket.pickUpStation ? (
+                          <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                            <ArrowUpCircle size={13} className="flex-shrink-0" />
+                            <span className="truncate max-w-[140px]" title={ticket.pickUpStation.name}>
+                              {ticket.pickUpStation.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Chưa chọn</span>
+                        )}
                       </td>
 
                       {/* Loại vé */}
@@ -314,7 +349,7 @@ export default function TicketsPage() {
 
                       {/* Trạng thái */}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <StatusBadge status={ticket.status} />
+                        <StatusBadge status={getDisplayStatus(ticket)} />
                       </td>
 
                       {/* Thao tác */}
@@ -363,7 +398,7 @@ export default function TicketsPage() {
               {/* Trạng thái rỗng */}
               {!isLoading && tickets.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <div className="flex flex-col items-center gap-2">
                       <Search size={32} className="text-gray-300" />
                       <p>Không tìm thấy vé nào phù hợp.</p>

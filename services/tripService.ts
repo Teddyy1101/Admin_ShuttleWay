@@ -1,5 +1,5 @@
 import axiosClient from '@/lib/axiosClient';
-import { AdminAttendancePayload, GetTripsParams, TripDetail, TripListItem } from '@/types/trip';
+import { AdminAttendancePayload, GetTripsParams, StationStudentsResponse, TripDetail, TripListItem } from '@/types/trip';
 
 // Interface response từ Backend cho danh sách chuyến đi (sau khi qua TransformInterceptor)
 interface TripsResponse {
@@ -76,5 +76,14 @@ export const tripService = {
   // Xóa chuyến đi (xóa mềm)
   deleteTrip: (id: string) => {
     return axiosClient.delete(`/trips/${id}`);
+  },
+
+  // Lấy danh sách học sinh cần đón/trả tại một trạm cụ thể (DRIVER)
+  getStudentsAtStation: async (
+    tripId: string,
+    stationId: string,
+  ): Promise<{ statusCode: number; message: string; data: StationStudentsResponse }> => {
+    const response = await axiosClient.get(`/trips/${tripId}/stations/${stationId}/students`);
+    return response.data;
   },
 };

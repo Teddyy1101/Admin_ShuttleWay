@@ -265,14 +265,14 @@ export default function TripsPage() {
     }
   };
 
-  // Hàm format giờ
+  // Hàm format giờ — hiển thị giờ Việt Nam (UTC+7)
   const formatTime = (dateStr?: string | null) => {
     if (!dateStr) return '—';
     try {
       return new Date(dateStr).toLocaleTimeString('vi-VN', {
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'UTC'
+        timeZone: 'Asia/Ho_Chi_Minh',
       });
     } catch {
       return '—';

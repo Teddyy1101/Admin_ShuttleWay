@@ -26,6 +26,7 @@ import {
   TripAttendanceItem,
   Direction,
   StationStudentsResponse,
+  StationSummary,
 } from '@/types/trip';
 import toast from 'react-hot-toast';
 
@@ -84,6 +85,7 @@ export default function TripDetailDrawer({ isOpen, tripId, onClose, onDataChange
   const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
   const [stationStudents, setStationStudents] = useState<StationStudentsResponse | null>(null);
   const [isLoadingStation, setIsLoadingStation] = useState(false);
+  const [stationSummary, setStationSummary] = useState<StationSummary | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Đóng dropdown khi click bên ngoài
@@ -102,8 +104,17 @@ export default function TripDetailDrawer({ isOpen, tripId, onClose, onDataChange
     if (!isOpen) {
       setSelectedStationId(null);
       setStationStudents(null);
+      setStationSummary(null);
     }
   }, [isOpen]);
+
+  // Load tổng hợp số HS đón/trả tại mỗi trạm khi mở drawer
+  useEffect(() => {
+    if (!isOpen || !tripId) return;
+    tripService.getStationSummary(tripId)
+      .then((res) => setStationSummary(res.data))
+      .catch(() => setStationSummary(null));
+  }, [isOpen, tripId]);
 
   // Lấy danh sách học sinh tại trạm khi chọn trạm
   const handleStationClick = async (stationId: string) => {
@@ -157,11 +168,15 @@ export default function TripDetailDrawer({ isOpen, tripId, onClose, onDataChange
     }
   };
 
-  // Format giờ
+  // Format giờ — hiển thị giờ Việt Nam (UTC+7)
   const formatTime = (dateStr?: string | null) => {
     if (!dateStr) return '—';
     try {
-      return new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      return new Date(dateStr).toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Ho_Chi_Minh',
+      });
     } catch {
       return '—';
     }
@@ -350,6 +365,27 @@ export default function TripDetailDrawer({ isOpen, tripId, onClose, onDataChange
                                 }`}>
                                   {station.name}
                                 </span>
+
+                                {/* Badge số HS đón/trả */}
+                                {stationSummary?.[station.id] && (() => {
+                                  const s = stationSummary[station.id];
+                                  return (
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {s.pickUpCount > 0 && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                          <ArrowUpCircle size={10} />
+                                          {s.pickUpCount}
+                                        </span>
+                                      )}
+                                      {s.dropOffCount > 0 && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                          <ArrowDownCircle size={10} />
+                                          {s.dropOffCount}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
 
                                 {/* Icon chỉ trạm hiện tại */}
                                 {isCurrent && (

@@ -150,3 +150,6 @@ export interface StationStudentsResponse {
   studentsToPickUp: StationStudentItem[];
   studentsToDropOff: StationStudentItem[];
 }
+
+// Tổng hợp số HS đón/trả tại mỗi trạm
+export type StationSummary = Record<string, { pickUpCount: number; dropOffCount: number }>;

@@ -1,5 +1,5 @@
 import axiosClient from '@/lib/axiosClient';
-import { AdminAttendancePayload, GetTripsParams, StationStudentsResponse, TripDetail, TripListItem } from '@/types/trip';
+import { AdminAttendancePayload, GetTripsParams, StationStudentsResponse, StationSummary, TripDetail, TripListItem } from '@/types/trip';
 
 // Interface response từ Backend cho danh sách chuyến đi (sau khi qua TransformInterceptor)
 interface TripsResponse {
@@ -84,6 +84,14 @@ export const tripService = {
     stationId: string,
   ): Promise<{ statusCode: number; message: string; data: StationStudentsResponse }> => {
     const response = await axiosClient.get(`/trips/${tripId}/stations/${stationId}/students`);
+    return response.data;
+  },
+
+  // Lấy tổng hợp số HS đón/trả tại mỗi trạm trong chuyến đi (ADMIN, DRIVER)
+  getStationSummary: async (
+    tripId: string,
+  ): Promise<{ statusCode: number; message: string; data: StationSummary }> => {
+    const response = await axiosClient.get(`/trips/${tripId}/station-summary`);
     return response.data;
   },
 };

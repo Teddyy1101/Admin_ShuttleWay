@@ -26,4 +26,10 @@ export const routeService = {
     const response = await axiosClient.patch(`/routes/${routeCode}`, data);
     return response.data;
   },
+
+  // Xóa tuyến đường (soft delete)
+  deleteRoute: async (routeCode: string): Promise<ApiResponse<Route>> => {
+    const response = await axiosClient.delete(`/routes/${routeCode}`);
+    return response.data;
+  },
 };

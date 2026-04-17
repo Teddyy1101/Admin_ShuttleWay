@@ -7,10 +7,11 @@ import { useRouter } from 'next/navigation';
 import PageWrapper from '@/components/PageWrapper';
 import PageHeader from '@/components/PageHeader';
 import Pagination from '@/components/Pagination';
+import ConfirmModal from '@/components/ConfirmModal';
 import RouteEditModal from '@/components/routes/RouteEditModal';
 import RouteFormDrawer from '@/components/routes/RouteFormDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Eye, Route as RouteIcon, Tag, Edit, Plus, MoreHorizontal } from 'lucide-react';
+import { Search, Eye, Route as RouteIcon, Tag, Edit, Plus, MoreHorizontal, Trash2 } from 'lucide-react';
 
 import { useRoutes } from '@/hooks/useRoute';
 import { Route } from '@/types/route';
@@ -30,11 +31,12 @@ const StatusBadge = ({ isActive }: { isActive: boolean }) => {
 
 export default function RoutesPage() {
   const router = useRouter();
-  const { routes, total, page, limit, isLoading, params, updateFilters, changePage, mutate } = useRoutes({ page: 1, limit: 10 });
+  const { routes, total, page, limit, isLoading, params, updateFilters, changePage, deleteRoute, mutate } = useRoutes({ page: 1, limit: 10 });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [routeToDelete, setRouteToDelete] = useState<Route | null>(null);
 
   const handleEditClick = (e: React.MouseEvent, route: Route) => {
     e.stopPropagation();
@@ -218,6 +220,14 @@ export default function RoutesPage() {
                                     <Edit size={15} className="text-amber-500" />
                                     Chỉnh sửa
                                   </button>
+                                  {/* Xóa tuyến */}
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setRouteToDelete(route); setOpenMenuId(null); }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                  >
+                                    <Trash2 size={15} />
+                                    Xóa tuyến đường
+                                  </button>
                                 </motion.div>
                               </>
                             )}
@@ -270,6 +280,23 @@ export default function RoutesPage() {
         isOpen={isCreateDrawerOpen}
         onClose={() => setIsCreateDrawerOpen(false)}
         onSuccess={() => mutate()}
+      />
+
+      {/* Modal xác nhận xóa tuyến */}
+      <ConfirmModal
+        isOpen={!!routeToDelete}
+        onClose={() => setRouteToDelete(null)}
+        onConfirm={async () => {
+          if (routeToDelete) {
+            await deleteRoute(routeToDelete.routeCode);
+            setRouteToDelete(null);
+          }
+        }}
+        title="Xóa tuyến đường"
+        description={`Bạn có chắc chắn muốn xóa tuyến "${routeToDelete?.name}" (${routeToDelete?.routeCode})? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa tuyến"
+        icon={Trash2}
+        variant="danger"
       />
     </PageWrapper>
   );

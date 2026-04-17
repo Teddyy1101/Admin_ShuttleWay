@@ -20,4 +20,12 @@ export const transactionService = {
     const response = await axiosClient.patch(`/transactions/${id}/status`, { status: 'SUCCESS' });
     return response.data;
   },
+
+  // Lấy tất cả giao dịch theo bộ lọc (dùng cho xuất báo cáo Excel)
+  exportTransactions: async (params?: GetTransactionsParams): Promise<ApiResponse<PaginatedData<Transaction>>> => {
+    const response = await axiosClient.get('/transactions', {
+      params: { ...params, page: 1, limit: 99999 },
+    });
+    return response.data;
+  },
 };

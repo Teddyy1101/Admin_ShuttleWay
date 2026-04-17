@@ -99,6 +99,13 @@ export default function RouteFormDrawer({ isOpen, onClose, onSuccess }: RouteFor
   // Submit: Tạo route kèm danh sách trạm trong cùng 1 payload
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Kiểm tra phải có ít nhất 2 trạm
+    if (selectedStations.length < 2) {
+      toast.error('Tuyến đường phải có ít nhất 2 trạm dừng!');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Gửi payload kèm mảng stations (bảng trung gian RouteStation)

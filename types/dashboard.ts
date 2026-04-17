@@ -11,3 +11,11 @@ export interface RevenueDataPoint {
   date: string;
   revenue: number;
 }
+
+// Interface cho top tài xế
+export interface TopDriver {
+  id: string;
+  fullName: string;
+  avatarUrl: string | null;
+  tripCount: number;
+}

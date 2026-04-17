@@ -22,9 +22,12 @@ import {
   Building2,
   CalendarRange,
   Receipt,
+  Loader2,
 } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
+import { transactionService } from '@/services/transactionService';
 import { Transaction, TransactionStatus, PaymentMethod } from '@/types/transaction';
+import toast from 'react-hot-toast';
 
 // Định dạng tiền VNĐ
 const formatCurrency = (amount: number) => {
@@ -91,88 +94,143 @@ export default function TransactionsPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
   const [transactionToConfirm, setTransactionToConfirm] = useState<Transaction | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
-  // Xuất báo cáo Excel với định dạng chuyên nghiệp (exceljs)
+  // Xuất báo cáo Excel — lấy TẤT CẢ dữ liệu theo bộ lọc hiện tại
   const exportToExcel = async () => {
-    if (transactions.length === 0) return;
+    setIsExporting(true);
+    try {
+      // Fetch tất cả giao dịch theo bộ lọc hiện tại (không giới hạn trang)
+      const { status, paymentMethod, search, fromDate, toDate } = params;
+      const exportRes = await transactionService.exportTransactions({ status, paymentMethod, search, fromDate, toDate });
+      const allTransactions: Transaction[] = exportRes?.data?.data || [];
 
-    const ExcelJS = (await import('exceljs')).default;
-    const { saveAs } = await import('file-saver');
+      if (allTransactions.length === 0) {
+        toast.error('Không có giao dịch nào để xuất báo cáo');
+        return;
+      }
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Lịch sử giao dịch');
+      const ExcelJS = (await import('exceljs')).default;
+      const { saveAs } = await import('file-saver');
 
-    const headers = ['ID', 'Mã giao dịch', 'Thời gian', 'Người thanh toán', 'SĐT', 'Nội dung', 'Phương thức', 'Giá gốc', 'Giảm giá', 'Thực thu', 'Trạng thái'];
-    const colCount = headers.length;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Lịch sử giao dịch');
 
-    // Cấu hình độ rộng cột
-    const colWidths = [38, 24, 20, 25, 16, 35, 16, 18, 18, 18, 16];
-    worksheet.columns = colWidths.map((w) => ({ width: w }));
+      const headers = ['STT', 'Mã giao dịch', 'Thời gian', 'Người thanh toán', 'SĐT', 'Nội dung', 'Phương thức', 'Giá gốc', 'Giảm giá', 'Thực thu', 'Trạng thái'];
+      const colCount = headers.length;
 
-    // Viền đen mỏng cho tất cả các ô
-    const thinBorder = {
-      top: { style: 'thin' as const, color: { argb: '000000' } },
-      left: { style: 'thin' as const, color: { argb: '000000' } },
-      bottom: { style: 'thin' as const, color: { argb: '000000' } },
-      right: { style: 'thin' as const, color: { argb: '000000' } },
-    };
+      const colWidths = [8, 24, 20, 25, 16, 35, 16, 18, 18, 18, 16];
+      worksheet.columns = colWidths.map((w) => ({ width: w }));
 
-    // ===== Dòng 1: Tiêu đề gộp cột =====
-    const titleRow = worksheet.addRow(['BÁO CÁO LỊCH SỬ GIAO DỊCH']);
-    worksheet.mergeCells(1, 1, 1, colCount);
-    const titleCell = titleRow.getCell(1);
-    titleCell.font = { name: 'Times New Roman', size: 14, bold: true };
-    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    titleRow.height = 30;
+      const thinBorder = {
+        top: { style: 'thin' as const, color: { argb: '000000' } },
+        left: { style: 'thin' as const, color: { argb: '000000' } },
+        bottom: { style: 'thin' as const, color: { argb: '000000' } },
+        right: { style: 'thin' as const, color: { argb: '000000' } },
+      };
 
-    // ===== Dòng 2: Trống (cách 1 dòng) =====
-    worksheet.addRow([]);
+      // ===== Dòng 1: Tiêu đề gộp cột =====
+      const titleRow = worksheet.addRow(['BÁO CÁO LỊCH SỬ GIAO DỊCH']);
+      worksheet.mergeCells(1, 1, 1, colCount);
+      const titleCell = titleRow.getCell(1);
+      titleCell.font = { name: 'Times New Roman', size: 14, bold: true };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      titleRow.height = 30;
 
-    // ===== Dòng 3: Tiêu đề bảng (nền vàng, in đậm) =====
-    const headerRow = worksheet.addRow(headers);
-    headerRow.eachCell((cell) => {
-      cell.font = { name: 'Times New Roman', size: 12, bold: true };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD700' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-      cell.border = thinBorder;
-    });
-    headerRow.height = 24;
+      // ===== Dòng 2: Thông tin bộ lọc =====
+      const statusLabels: Record<string, string> = { SUCCESS: 'Thành công', PENDING: 'Chờ xử lý', FAILED: 'Thất bại' };
+      const filterParts: string[] = [];
+      if (status) filterParts.push(`Trạng thái: ${statusLabels[status] || status}`);
+      if (paymentMethod) filterParts.push(`Phương thức: ${paymentMethodConfig[paymentMethod].label}`);
+      if (fromDate) filterParts.push(`Từ ngày: ${fromDate}`);
+      if (toDate) filterParts.push(`Đến ngày: ${toDate}`);
+      if (search) filterParts.push(`Tìm kiếm: "${search}"`);
 
-    // ===== Dòng 4+: Dữ liệu =====
-    const statusMap: Record<string, string> = { SUCCESS: 'Thành công', PENDING: 'Chờ xử lý', FAILED: 'Thất bại' };
+      const filterText = filterParts.length > 0 ? `Bộ lọc: ${filterParts.join(' | ')}` : `Tất cả giao dịch — Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`;
+      const filterRow = worksheet.addRow([filterText]);
+      worksheet.mergeCells(2, 1, 2, colCount);
+      filterRow.getCell(1).font = { name: 'Times New Roman', size: 11, italic: true };
+      filterRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
 
-    transactions.forEach((t: Transaction) => {
-      const row = worksheet.addRow([
-        t.id,
-        t.transactionCode,
-        formatDateTime(t.createdAt),
-        t.user.fullName,
-        t.user.phone || '—',
-        `${t.ticket.ticketType === 'MONTHLY' ? 'Vé tháng' : 'Vé lượt'} - ${t.ticket.route.name}`,
-        paymentMethodConfig[t.paymentMethod].label,
-        t.totalAmount,
-        t.discountAmount,
-        t.finalAmount,
-        statusMap[t.status] || t.status,
-      ]);
+      // ===== Dòng 3: Trống =====
+      worksheet.addRow([]);
 
-      row.eachCell((cell, colNumber) => {
-        cell.font = { name: 'Times New Roman', size: 12 };
+      // ===== Dòng 4: Tiêu đề bảng =====
+      const headerRow = worksheet.addRow(headers);
+      headerRow.eachCell((cell) => {
+        cell.font = { name: 'Times New Roman', size: 12, bold: true };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD700' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
         cell.border = thinBorder;
-        cell.alignment = { vertical: 'middle', wrapText: true };
+      });
+      headerRow.height = 24;
 
-        // Căn phải và định dạng số cho cột tiền (8, 9, 10)
+      // ===== Dòng 5+: Dữ liệu =====
+      const statusMap: Record<string, string> = { SUCCESS: 'Thành công', PENDING: 'Chờ xử lý', FAILED: 'Thất bại' };
+      let sumTotal = 0, sumDiscount = 0, sumFinal = 0;
+
+      allTransactions.forEach((t: Transaction, index: number) => {
+        sumTotal += t.totalAmount;
+        sumDiscount += t.discountAmount;
+        sumFinal += t.finalAmount;
+
+        const row = worksheet.addRow([
+          index + 1,
+          t.transactionCode,
+          formatDateTime(t.createdAt),
+          t.user.fullName,
+          t.user.phone || '—',
+          `${t.ticket.ticketType === 'MONTHLY' ? 'Vé tháng' : 'Vé lượt'} - ${t.ticket.route.name}`,
+          paymentMethodConfig[t.paymentMethod].label,
+          t.totalAmount,
+          t.discountAmount,
+          t.finalAmount,
+          statusMap[t.status] || t.status,
+        ]);
+
+        row.eachCell((cell, colNumber) => {
+          cell.font = { name: 'Times New Roman', size: 12 };
+          cell.border = thinBorder;
+          cell.alignment = { vertical: 'middle', wrapText: true };
+          if (colNumber >= 8 && colNumber <= 10) {
+            cell.numFmt = '#,##0';
+            cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          }
+        });
+      });
+
+      // ===== Dòng tổng kết =====
+      const summaryRow = worksheet.addRow([
+        '', '', '', '', '', '', 'TỔNG CỘNG',
+        sumTotal, sumDiscount, sumFinal, '',
+      ]);
+      summaryRow.eachCell((cell, colNumber) => {
+        cell.font = { name: 'Times New Roman', size: 12, bold: true };
+        cell.border = thinBorder;
+        cell.alignment = { vertical: 'middle' };
         if (colNumber >= 8 && colNumber <= 10) {
           cell.numFmt = '#,##0';
           cell.alignment = { horizontal: 'right', vertical: 'middle' };
         }
+        if (colNumber === 7) {
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        }
       });
-    });
+      summaryRow.getCell(7).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'E8F5E9' } };
+      summaryRow.getCell(8).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'E8F5E9' } };
+      summaryRow.getCell(9).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'E8F5E9' } };
+      summaryRow.getCell(10).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'E8F5E9' } };
 
-    // Xuất file
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    saveAs(blob, `giao-dich-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      // Xuất file
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, `giao-dich-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success(`Đã xuất ${allTransactions.length} giao dịch thành công!`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Lỗi khi xuất báo cáo');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Xử lý xác nhận thanh toán
@@ -211,11 +269,20 @@ export default function TransactionsPage() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={exportToExcel}
-          disabled={transactions.length === 0}
+          disabled={transactions.length === 0 || isExporting}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl shadow-sm shadow-emerald-600/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <FileSpreadsheet size={16} />
-          Xuất báo cáo
+          {isExporting ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Đang xuất...
+            </>
+          ) : (
+            <>
+              <FileSpreadsheet size={16} />
+              Xuất báo cáo
+            </>
+          )}
         </motion.button>
       </div>
 

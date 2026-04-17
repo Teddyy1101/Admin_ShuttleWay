@@ -2,8 +2,6 @@
 
 import { motion } from 'framer-motion';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,18 +12,7 @@ import {
 } from 'recharts';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { RevenueDataPoint } from '@/types/dashboard';
-
-// Dữ liệu mô phỏng doanh thu 7 ngày
-const mockRevenueData: RevenueDataPoint[] = [
-  { date: '08/03', revenue: 4200000 },
-  { date: '09/03', revenue: 5800000 },
-  { date: '10/03', revenue: 3500000 },
-  { date: '11/03', revenue: 7200000 },
-  { date: '12/03', revenue: 6100000 },
-  { date: '13/03', revenue: 8500000 },
-  { date: '14/03', revenue: 9200000 },
-];
+import { useRevenueChart } from '@/hooks/useDashboard';
 
 // Format tiền VND cho tooltip
 const formatCurrency = (value: number) => {
@@ -58,10 +45,11 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   return null;
 }
 
-// Biểu đồ doanh thu 7 ngày gần nhất
+// Biểu đồ doanh thu 7 ngày gần nhất — dữ liệu thực từ API
 export default function RevenueChart() {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { revenueData, isLoading } = useRevenueChart();
 
   useEffect(() => {
     setMounted(true);
@@ -69,8 +57,19 @@ export default function RevenueChart() {
 
   const isDark = resolvedTheme === 'dark';
 
+  // Tính phần trăm thay đổi doanh thu
+  const getChangePercent = () => {
+    if (revenueData.length < 2) return null;
+    const first = revenueData[0].revenue;
+    const last = revenueData[revenueData.length - 1].revenue;
+    if (first === 0) return last > 0 ? 100 : 0;
+    return Math.round(((last - first) / first) * 100 * 10) / 10;
+  };
+
+  const changePercent = getChangePercent();
+
   // Chờ mount để tránh hydration mismatch
-  if (!mounted) {
+  if (!mounted || isLoading) {
     return (
       <div className="h-[350px] animate-pulse rounded-2xl bg-gray-100 dark:bg-gray-800" />
     );
@@ -93,63 +92,71 @@ export default function RevenueChart() {
             Biểu đồ theo dõi doanh thu hàng ngày
           </p>
         </div>
-        <div className="rounded-xl bg-emerald-50 px-3 py-1.5 dark:bg-emerald-500/10">
-          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-            +12.5%
-          </span>
-        </div>
+        {changePercent !== null && (
+          <div className={`rounded-xl px-3 py-1.5 ${changePercent >= 0 ? 'bg-emerald-50 dark:bg-emerald-500/10' : 'bg-red-50 dark:bg-red-500/10'}`}>
+            <span className={`text-sm font-semibold ${changePercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+              {changePercent >= 0 ? '+' : ''}{changePercent}%
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Biểu đồ */}
-      <ResponsiveContainer width="100%" height={300}>
-        <AreaChart data={mockRevenueData}>
-          <defs>
-            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke={isDark ? '#374151' : '#e5e7eb'}
-            vertical={false}
-          />
-          <XAxis
-            dataKey="date"
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}
-          />
-          <YAxis
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}
-            tickFormatter={(value) =>
-              `${(value / 1000000).toFixed(1)}M`
-            }
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Area
-            type="monotone"
-            dataKey="revenue"
-            stroke="#6366f1"
-            strokeWidth={3}
-            fill="url(#colorRevenue)"
-            dot={{
-              fill: '#6366f1',
-              stroke: isDark ? '#111827' : '#ffffff',
-              strokeWidth: 3,
-              r: 5,
-            }}
-            activeDot={{
-              fill: '#6366f1',
-              stroke: isDark ? '#111827' : '#ffffff',
-              strokeWidth: 3,
-              r: 7,
-            }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      {revenueData.length > 0 ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <AreaChart data={revenueData}>
+            <defs>
+              <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={isDark ? '#374151' : '#e5e7eb'}
+              vertical={false}
+            />
+            <XAxis
+              dataKey="date"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}
+              tickFormatter={(value) =>
+                `${(value / 1000000).toFixed(1)}M`
+              }
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Area
+              type="monotone"
+              dataKey="revenue"
+              stroke="#6366f1"
+              strokeWidth={3}
+              fill="url(#colorRevenue)"
+              dot={{
+                fill: '#6366f1',
+                stroke: isDark ? '#111827' : '#ffffff',
+                strokeWidth: 3,
+                r: 5,
+              }}
+              activeDot={{
+                fill: '#6366f1',
+                stroke: isDark ? '#111827' : '#ffffff',
+                strokeWidth: 3,
+                r: 7,
+              }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[300px] items-center justify-center text-gray-400 dark:text-gray-500">
+          Chưa có dữ liệu doanh thu
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -29,6 +29,18 @@ export const useRoutes = (initialParams?: GetRoutesParams) => {
     setParams(prev => ({ ...prev, page: newPage }));
   }, []);
 
+  // Xóa tuyến đường
+  const deleteRoute = async (routeCode: string) => {
+    try {
+      await routeService.deleteRoute(routeCode);
+      toast.success('Xóa tuyến đường thành công');
+      mutate();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Lỗi khi xóa tuyến đường');
+      throw error;
+    }
+  };
+
   return {
     routes: data?.data?.data || [],
     total: data?.data?.meta?.total || 0,
@@ -39,6 +51,7 @@ export const useRoutes = (initialParams?: GetRoutesParams) => {
     params,
     updateFilters,
     changePage,
+    deleteRoute,
     mutate,
   };
 };

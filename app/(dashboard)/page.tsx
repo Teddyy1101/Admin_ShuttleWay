@@ -3,6 +3,7 @@
 import PageWrapper from '@/components/PageWrapper';
 import StatCard from '@/components/dashboard/StatCard';
 import RevenueChart from '@/components/dashboard/RevenueChart';
+import TopDriversChart from '@/components/dashboard/TopDriversChart';
 import DashboardSkeleton from '@/components/dashboard/SkeletonLoader';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Users, Bus, MapPin, Banknote } from 'lucide-react';
@@ -41,10 +42,10 @@ const statCardConfigs = [
 
 // Dữ liệu mặc định khi API chưa sẵn sàng
 const defaultStats = {
-  activeStudents: 1248,
-  activeBuses: 32,
-  todayTrips: 18,
-  totalRevenue: 45600000,
+  activeStudents: 0,
+  activeBuses: 0,
+  todayTrips: 0,
+  totalRevenue: 0,
 };
 
 // Trang Dashboard tổng quan
@@ -111,8 +112,11 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Biểu đồ doanh thu */}
-      <RevenueChart />
+      {/* Biểu đồ doanh thu + Top tài xế */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <RevenueChart />
+        <TopDriversChart />
+      </div>
     </PageWrapper>
   );
 }

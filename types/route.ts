@@ -93,6 +93,8 @@ export interface CreateStationPayload {
   name: string;
   latitude: number;
   longitude: number;
+  routeId?: string;
+  orderIndex?: number;
 }
 
 // Payload gửi lên API khi cập nhật trạm dừng

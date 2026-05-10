@@ -50,11 +50,11 @@ export default function StudentDetailDrawer({ isOpen, onClose, ticket, route }: 
   }, [isOpen, ticket, route.id]);
 
   // Lấy trạm đón (orderIndex nhỏ nhất) và trạm trả (orderIndex lớn nhất)
-  const sortedStations = (route.stations || [])
-    .filter((s: Station) => s.isActive)
-    .sort((a: Station, b: Station) => a.orderIndex - b.orderIndex);
-  const pickupStation = sortedStations[0];
-  const dropoffStation = sortedStations[sortedStations.length - 1];
+  const sortedStations = (route.routeStations || [])
+    .filter((rs) => rs.station.isActive)
+    .sort((a, b) => a.orderIndex - b.orderIndex);
+  const pickupStation = sortedStations[0]?.station;
+  const dropoffStation = sortedStations[sortedStations.length - 1]?.station;
 
   // Tạo initials từ tên cho avatar fallback
   const getInitials = (name: string) => {

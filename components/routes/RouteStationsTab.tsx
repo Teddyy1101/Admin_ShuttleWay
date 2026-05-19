@@ -137,10 +137,24 @@ export default function RouteStationsTab({ route, mutate }: RouteStationsTabProp
   const handleSaveOrder = async () => {
     setIsSavingOrder(true);
     try {
-      const stationsPayload = localStations.map((rs, index) => ({
-        stationId: rs.station?.id || '',
-        orderIndex: index + 1,
-      }));
+      const stationsPayload = localStations
+        .filter((rs) => rs.station?.id) // Loại bỏ station thiếu ID
+        .map((rs, index) => ({
+          stationId: rs.station!.id,
+          orderIndex: index + 1,
+        }));
+
+      if (stationsPayload.length === 0) {
+        toast.error('Không có trạm hợp lệ để lưu!');
+        setIsSavingOrder(false);
+        return;
+      }
+
+      if (stationsPayload.length !== localStations.length) {
+        toast.error('Một số trạm bị thiếu dữ liệu, vui lòng tải lại trang!');
+        setIsSavingOrder(false);
+        return;
+      }
 
       await routeService.updateRoute(route.routeCode, {
         stations: stationsPayload,

@@ -3,6 +3,12 @@ import { ApiResponse, PaginatedData } from '@/types/api';
 import { User, GetUsersParams } from '@/types/user';
 
 export const userService = {
+  // Lấy thông tin cá nhân của user đang đăng nhập
+  getMe: async (): Promise<ApiResponse<User>> => {
+    const response = await axiosClient.get('/users/me');
+    return response.data;
+  },
+
   // Lấy danh sách tài khoản có phân trang và lọc
   getUsers: async (params?: GetUsersParams): Promise<ApiResponse<PaginatedData<User>>> => {
     const response = await axiosClient.get('/users', { params });

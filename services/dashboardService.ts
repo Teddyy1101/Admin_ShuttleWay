@@ -21,4 +21,28 @@ export const dashboardService = {
     const response = await axiosClient.get('/dashboard/top-drivers');
     return response.data;
   },
+
+  // Lấy thống kê trạng thái chuyến đi
+  getTripStats: async (): Promise<ApiResponse<any[]>> => {
+    const response = await axiosClient.get('/dashboard/trip-stats');
+    return response.data;
+  },
+
+  // Lấy hoạt động gần đây
+  getRecentActivities: async (): Promise<ApiResponse<any[]>> => {
+    const response = await axiosClient.get('/dashboard/recent-activities');
+    return response.data;
+  },
+
+  // Lấy chuyến xe đang chạy
+  getLiveTrips: async (): Promise<ApiResponse<any[]>> => {
+    const response = await axiosClient.get('/dashboard/live-trips');
+    return response.data;
+  },
+
+  // Lấy thông báo Admin trên Header
+  getAdminNotifications: async (): Promise<ApiResponse<any[]>> => {
+    const response = await axiosClient.get('/dashboard/admin-notifications');
+    return response.data;
+  },
 };

@@ -19,3 +19,39 @@ export interface TopDriver {
   avatarUrl: string | null;
   tripCount: number;
 }
+
+// Interface cho thống kê trạng thái chuyến đi
+export interface TripStat {
+  status: string;
+  count: number;
+}
+
+// Interface cho hoạt động gần đây
+export interface Activity {
+  id: string;
+  type: 'TICKET' | 'SUPPORT';
+  title: string;
+  description: string;
+  createdAt: string;
+}
+
+// Interface cho chuyến xe đang chạy
+export interface LiveTrip {
+  id: string;
+  routeId: string;
+  startTime: string;
+  route?: { routeCode: string; name: string };
+  driver?: { fullName: string };
+  bus?: { licensePlate: string };
+}
+
+// Interface cho thông báo Admin
+export interface AdminNotification {
+  id: string;
+  type: 'LEAVE_REQUEST' | 'PAYMENT_SUCCESS';
+  title: string;
+  description: string;
+  createdAt: string;
+  isRead: boolean;
+  payload?: any;
+}

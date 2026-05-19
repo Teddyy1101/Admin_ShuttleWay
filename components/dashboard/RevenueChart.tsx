@@ -45,7 +45,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   return null;
 }
 
-// Biểu đồ doanh thu 7 ngày gần nhất — dữ liệu thực từ API
+// Biểu đồ doanh thu 6 tháng gần nhất — dữ liệu thực từ API
 export default function RevenueChart() {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -86,10 +86,10 @@ export default function RevenueChart() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Doanh thu 7 ngày gần nhất
+            Doanh thu 6 tháng gần nhất
           </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Biểu đồ theo dõi doanh thu hàng ngày
+            Biểu đồ theo dõi doanh thu hàng tháng
           </p>
         </div>
         {changePercent !== null && (

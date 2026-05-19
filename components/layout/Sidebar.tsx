@@ -35,7 +35,7 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/', label: 'Trang chủ', icon: LayoutDashboard },
   { href: '/accounts', label: 'Quản lý tài khoản', icon: Users },
   {
     label: 'Quản lý vận hành',
@@ -129,7 +129,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               className="overflow-hidden"
             >
               <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent whitespace-nowrap">
-                Admin Dashboard 
+                Shuttle Way
               </h1>
             </motion.div>
           )}
@@ -137,6 +137,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
         {/* Nút toggle thu/phóng */}
         <motion.button
+          suppressHydrationWarning
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={onToggle}

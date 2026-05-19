@@ -40,7 +40,8 @@ export default function BulkAssignModal({ isOpen, onClose, route, onSuccess }: B
   }, []);
 
   const [formData, setFormData] = useState({
-    month: new Date().toISOString().slice(0, 7), // YYYY-MM
+    scheduleType: 'month' as 'week' | 'month',
+    startDate: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
     days: [1, 2, 3, 4, 5], // Mặc định T2-T6
     time: defaultTime,
     direction: Direction.PICK_UP, // Mặc định chiều đón
@@ -84,24 +85,25 @@ export default function BulkAssignModal({ isOpen, onClose, route, onSuccess }: B
     setIsSubmitting(true);
 
     try {
-      const [year, month] = formData.month.split('-').map(Number);
-      const daysInMonth = new Date(year, month, 0).getDate();
       const validDates: Date[] = [];
+      const startDate = new Date(formData.startDate);
+      startDate.setHours(0, 0, 0, 0);
 
-      // Chỉ phân lịch cho ngày từ hôm nay trở đi
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      let endDate = new Date(startDate);
+      if (formData.scheduleType === 'week') {
+        endDate.setDate(endDate.getDate() + 6); // 1 tuần (7 ngày kể từ ngày bắt đầu)
+      } else {
+        endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0); // Hết tháng của ngày bắt đầu
+      }
 
-      for (let i = 1; i <= daysInMonth; i++) {
-        const date = new Date(year, month - 1, i);
-        if (date < today) continue;
-        if (formData.days.includes(date.getDay())) {
-          validDates.push(date);
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        if (formData.days.includes(d.getDay())) {
+          validDates.push(new Date(d));
         }
       }
 
       if (validDates.length === 0) {
-        toast.error('Không có ngày hợp lệ nào trong tháng đã chọn (các ngày đã qua sẽ bị bỏ qua)');
+        toast.error('Không có ngày hợp lệ nào trong khoảng thời gian đã chọn');
         setIsSubmitting(false);
         return;
       }
@@ -130,7 +132,7 @@ export default function BulkAssignModal({ isOpen, onClose, route, onSuccess }: B
 
       await Promise.all(promises);
 
-      toast.success('Tạo lịch & phân công tháng thành công!');
+      toast.success('Tạo lịch & phân công thành công!');
       if (onSuccess) onSuccess();
       onClose();
     } catch (error: any) {
@@ -177,7 +179,7 @@ export default function BulkAssignModal({ isOpen, onClose, route, onSuccess }: B
                     Phân công lịch trình
                   </h2>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Tạo lịnh trình phân công tài xế, xe theo tháng
+                    Tạo lịch trình phân công tài xế, xe hàng loạt
                   </p>
                 </div>
               </div>
@@ -195,18 +197,55 @@ export default function BulkAssignModal({ isOpen, onClose, route, onSuccess }: B
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
               <form id="bulk-assign-form" onSubmit={handleSubmit} className="space-y-6">
 
+                <div className="grid grid-cols-1 gap-6 mb-6">
+                  {/* Schedule Type */}
+                  <div>
+                    <label className="flex items-center gap-2 mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <CalendarPlus size={16} className="text-blue-500" />
+                      <span>Kiểu phân lịch <span className="text-red-500">*</span></span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={() => setFormData(prev => ({ ...prev, scheduleType: 'month' }))}
+                        className={`py-2.5 px-4 rounded-xl text-sm font-medium transition-all ${
+                          formData.scheduleType === 'month'
+                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        } disabled:opacity-60`}
+                      >
+                        Theo tháng
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={() => setFormData(prev => ({ ...prev, scheduleType: 'week' }))}
+                        className={`py-2.5 px-4 rounded-xl text-sm font-medium transition-all ${
+                          formData.scheduleType === 'week'
+                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        } disabled:opacity-60`}
+                      >
+                        Theo tuần (7 ngày)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {/* Month Picker */}
+                  {/* Start Date Picker */}
                   <div>
                     <label className="flex items-center gap-2 mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
                       <Calendar size={16} className="text-blue-500" />
-                      <span>Tháng áp dụng <span className="text-red-500">*</span></span>
+                      <span>Ngày bắt đầu <span className="text-red-500">*</span></span>
                     </label>
                     <input
-                      type="month"
+                      type="date"
                       required
-                      value={formData.month}
-                      onChange={(e) => setFormData(prev => ({ ...prev, month: e.target.value }))}
+                      value={formData.startDate}
+                      min={new Date().toISOString().slice(0, 10)}
+                      onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
                       disabled={isSubmitting}
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm disabled:opacity-60"
                     />

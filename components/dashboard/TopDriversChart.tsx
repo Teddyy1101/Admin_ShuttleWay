@@ -81,10 +81,11 @@ export default function TopDriversChart() {
       </div>
 
       {topDrivers.length > 0 ? (
-        <div className="space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           {/* Bar Chart */}
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={topDrivers} layout="vertical" margin={{ left: 0, right: 20 }}>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topDrivers} layout="vertical" margin={{ left: 0, right: 20 }}>
               <XAxis
                 type="number"
                 axisLine={false}
@@ -106,10 +107,11 @@ export default function TopDriversChart() {
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          </div>
 
           {/* Danh sách chi tiết */}
-          <div className="space-y-2">
+          <div className="space-y-3 lg:pl-6 lg:border-l lg:border-gray-200 dark:lg:border-gray-800">
             {topDrivers.map((driver, index) => (
               <div
                 key={driver.id}

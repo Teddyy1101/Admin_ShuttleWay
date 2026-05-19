@@ -4,6 +4,9 @@ import PageWrapper from '@/components/PageWrapper';
 import StatCard from '@/components/dashboard/StatCard';
 import RevenueChart from '@/components/dashboard/RevenueChart';
 import TopDriversChart from '@/components/dashboard/TopDriversChart';
+import TripStatusChart from '@/components/dashboard/TripStatusChart';
+import RecentActivities from '@/components/dashboard/RecentActivities';
+import LiveTrips from '@/components/dashboard/LiveTrips';
 import DashboardSkeleton from '@/components/dashboard/SkeletonLoader';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Users, Bus, MapPin, Banknote } from 'lucide-react';
@@ -113,9 +116,23 @@ export default function DashboardPage() {
       </div>
 
       {/* Biểu đồ doanh thu + Top tài xế */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <RevenueChart />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="xl:col-span-2">
+          <RevenueChart />
+        </div>
+        <div className="xl:col-span-1">
+          <TripStatusChart />
+        </div>
+      </div>
+
+      <div className="mt-6">
         <TopDriversChart />
+      </div>
+
+      {/* Hoạt động gần đây + Chuyến xe đang chạy */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <RecentActivities />
+        <LiveTrips />
       </div>
     </PageWrapper>
   );

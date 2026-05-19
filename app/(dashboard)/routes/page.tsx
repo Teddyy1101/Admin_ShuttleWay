@@ -122,7 +122,7 @@ export default function RoutesPage() {
                 ))
               ) : (
                 <AnimatePresence>
-                  {routes.map((route) => (
+                  {[...routes].sort((a, b) => (a.routeCode || '').localeCompare(b.routeCode || '')).map((route) => (
                     <motion.tr
                       key={route.id}
                       initial={{ opacity: 0, y: 10 }}

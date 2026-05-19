@@ -77,7 +77,7 @@ export default function RouteDetailPage() {
       </div>
 
       {/* Main Card */}
-      <div className="min-h-[calc(100vh-180px)] bg-white dark:bg-gray-900 rounded-l border border-gray-200 dark:border-gray-800 overflow-hidden">
+      <div className="min-h-[calc(100vh-180px)] bg-white dark:bg-gray-900 rounded-l border border-gray-200 dark:border-gray-800 overflow-hidden lg:overflow-visible">
 
         {/* Inner Card Header */}
         <div className="flex items-center gap-4 py-5 px-6  border-gray-100 dark:border-gray-800">

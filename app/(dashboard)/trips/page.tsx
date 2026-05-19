@@ -308,7 +308,7 @@ export default function TripsPage() {
       </div>
 
       {/* Container chính */}
-      <div className="bg-white rounded-l border border-gray-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden flex flex-col min-h-[calc(100vh-180px)]">
+      <div className="bg-white rounded-l border border-gray-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden lg:overflow-visible flex flex-col min-h-[calc(100vh-180px)]">
         {/* Thanh bộ lọc gọn — icon + badge + nút xóa lọc */}
         <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3">
           <div className="flex items-center justify-between">
@@ -416,7 +416,7 @@ export default function TripsPage() {
         </div>
 
         {/* Bảng chuyến đi */}
-        <div className="overflow-x-auto flex-1 min-h-[300px]">
+        <div className="overflow-x-auto lg:overflow-visible flex-1 min-h-[300px]">
           <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50 text-xs uppercase text-gray-700 dark:text-gray-300">
               <tr>

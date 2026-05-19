@@ -151,7 +151,7 @@ export default function AccountsPage() {
       </div>
 
       {/* Tabs & Filters */}
-      <div className="bg-white rounded-l border border-gray-200 dark:border-gray-800 overflow-hidden filter-container flex flex-col">
+      <div className="bg-white rounded-l border border-gray-200 dark:border-gray-800 overflow-hidden lg:overflow-visible filter-container flex flex-col">
         <div className="border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-4 justify-between items-end px-4 pt-2">
           
           <div className="flex w-full sm:w-auto overflow-x-auto no-scrollbar gap-6">
@@ -196,7 +196,7 @@ export default function AccountsPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto min-h-[300px]">
+        <div className="overflow-x-auto lg:overflow-visible min-h-[300px]">
           <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50 text-xs uppercase text-gray-700 dark:text-gray-300">
               <tr>

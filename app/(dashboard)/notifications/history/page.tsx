@@ -140,7 +140,7 @@ export default function NotificationHistoryPage() {
         />
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-l border border-gray-200 dark:border-gray-800 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-l border border-gray-200 dark:border-gray-800 overflow-hidden lg:overflow-visible">
         {/* Header + Bộ lọc */}
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 space-y-4">
           {/* Dòng 1: Tiêu đề + Tìm kiếm */}
@@ -197,7 +197,7 @@ export default function NotificationHistoryPage() {
         </div>
 
         {/* Bảng dữ liệu */}
-        <div className="overflow-x-auto min-h-[300px]">
+        <div className="overflow-x-auto lg:overflow-visible min-h-[300px]">
           <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50 text-xs uppercase text-gray-700 dark:text-gray-300">
               <tr>

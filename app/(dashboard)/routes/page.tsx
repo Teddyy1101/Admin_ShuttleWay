@@ -75,7 +75,7 @@ export default function RoutesPage() {
         </motion.button>
       </div>
 
-      <div className="bg-white rounded-l border border-gray-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden filter-container flex flex-col min-h-[calc(100vh-180px)]">
+      <div className="bg-white rounded-l border border-gray-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden lg:overflow-visible filter-container flex flex-col min-h-[calc(100vh-180px)]">
         {/* Actions Bar */}
         <div className="border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-4 justify-between items-center p-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Danh sách tuyến đường</h2>
@@ -96,7 +96,7 @@ export default function RoutesPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto flex-1 min-h-[300px]">
+        <div className="overflow-x-auto lg:overflow-visible flex-1 min-h-[300px]">
           <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50 text-xs uppercase text-gray-700 dark:text-gray-300">
               <tr>

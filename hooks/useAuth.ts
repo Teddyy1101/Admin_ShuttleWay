@@ -68,7 +68,7 @@ export const useAuth = create<AuthState>((set) => ({
                   email: res.data.email,
                   fullName: res.data.fullName,
                   role: res.data.role,
-                  avatarUrl: res.data.avatarUrl,
+                  avatarUrl: res.data.avatarUrl === null ? undefined : res.data.avatarUrl,
                 };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 set({ user: updatedUser });

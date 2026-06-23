@@ -30,6 +30,15 @@ axiosClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
+        const requestUrl = error.config?.url || '';
+        const isLoginRequest = requestUrl.includes('/auth/login');
+        const isOnLoginPage = window.location.pathname === '/login';
+
+        // Không redirect nếu đang gọi API login hoặc đang ở trang login
+        if (isLoginRequest || isOnLoginPage) {
+          return Promise.reject(error);
+        }
+
         localStorage.removeItem('accessToken');
         window.location.href = '/login';
       }

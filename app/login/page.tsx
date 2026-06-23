@@ -20,12 +20,7 @@ export default function LoginPage() {
     checkAuth();
   }, [checkAuth]);
 
-  // Redirect nếu đã đăng nhập
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, router]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +33,7 @@ export default function LoginPage() {
       setIsSubmitting(true);
       await login({ email, password });
       toast.success('Đăng nhập thành công');
-      // router.push('/') được xử lý bởi useEffect trên
+      router.push('/');
     } catch (error: any) {
       // Ưu tiên hiển thị lỗi từ hook kiểm tra quyền, sau đó mới tới lỗi API
       const errorMsg = error?.message && !error?.response

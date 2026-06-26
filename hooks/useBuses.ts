@@ -55,7 +55,7 @@ export const useBuses = (initialParams?: GetBusesParams) => {
   const deleteBus = async (id: string) => {
     try {
       await busService.deleteBus(id);
-      toast.success('Đã xóa xe buýt');
+      toast.success('Đã xóa xe buýt. Các chuyến đi đang chờ đã được gỡ xe để phân công lại.', { duration: 5000 });
       mutate();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Lỗi khi xóa xe buýt');

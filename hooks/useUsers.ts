@@ -74,7 +74,7 @@ export const useUsers = (initialParams?: GetUsersParams): {
   const deleteAccount = async (id: string) => {
     try {
       await userService.deleteUser(id);
-      toast.success('Đã xóa tài khoản');
+      toast.success('Đã xóa tài khoản. Các liên kết phụ huynh-học sinh, vé và lịch điểm danh liên quan cũng đã được xử lý.', { duration: 5000 });
       mutate();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại');

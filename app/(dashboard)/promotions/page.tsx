@@ -12,7 +12,7 @@ import {
   Plus,
   Tag,
   Edit,
-  Trash2,
+
   ToggleLeft,
   ToggleRight,
   Percent,
@@ -82,10 +82,10 @@ const UsageBar = ({ used, total }: { used: number; total: number }) => {
 export default function PromotionsPage() {
   const {
     promotions, total, page, limit, isLoading, params,
-    updateFilters, changePage, createPromotion, updatePromotion, deletePromotion, toggleStatus,
+    updateFilters, changePage, createPromotion, updatePromotion, toggleStatus,
   } = usePromotions({ page: 1, limit: 10 });
 
-  const [promoToDelete, setPromoToDelete] = useState<string | null>(null);
+
   const [promoToToggle, setPromoToToggle] = useState<Promotion | null>(null);
   const [promoToEdit, setPromoToEdit] = useState<Promotion | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -93,13 +93,7 @@ export default function PromotionsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  // Xử lý xác nhận xóa hoàn toàn
-  const confirmDelete = async () => {
-    if (promoToDelete) {
-      await deletePromotion(promoToDelete);
-      setPromoToDelete(null);
-    }
-  };
+
 
   // Xử lý xác nhận bật/tắt trạng thái
   const confirmToggle = async () => {
@@ -406,14 +400,7 @@ export default function PromotionsPage() {
                                     {promo.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
                                     {promo.isActive ? 'Tắt khuyến mãi' : 'Bật khuyến mãi'}
                                   </button>
-                                  {/* Xóa */}
-                                  <button
-                                    onClick={() => { setPromoToDelete(promo.id); setOpenMenuId(null); }}
-                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                  >
-                                    <Trash2 size={15} />
-                                    Xóa khuyến mãi
-                                  </button>
+
                                 </motion.div>
                               </>
                             )}
@@ -467,16 +454,7 @@ export default function PromotionsPage() {
         variant="warning"
       />
 
-      {/* Modal xác nhận xóa hoàn toàn khuyến mãi */}
-      <ConfirmModal
-        isOpen={!!promoToDelete}
-        onClose={() => setPromoToDelete(null)}
-        onConfirm={confirmDelete}
-        title="Xác nhận xóa hoàn toàn"
-        description="Bạn có chắc chắn muốn xóa vĩnh viễn mã khuyến mãi này? Toàn bộ dữ liệu liên quan sẽ bị mất và không thể khôi phục."
-        confirmText="Xóa vĩnh viễn"
-        variant="danger"
-      />
+
 
       {/* Drawer tạo mới / cập nhật khuyến mãi */}
       <PromotionFormDrawer

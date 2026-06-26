@@ -58,11 +58,15 @@ export const useStations = (initialParams?: GetStationsParams) => {
     }
   };
 
-  // Bật/Tắt trạng thái hoạt động trạm dừng
+  // Bật/Tắt trạng thái hoạt động trạm dừng (khi tắt sẽ gỡ khỏi tuyến đường)
   const toggleStationStatus = async (station: Station) => {
     try {
       await stationService.toggleStationStatus(station.id);
-      toast.success(station.isActive ? 'Đã tạm dừng hoạt động trạm dừng!' : 'Đã kích hoạt trạm dừng!');
+      if (station.isActive) {
+        toast.success('Đã tạm dừng trạm dừng. Trạm đã được gỡ khỏi tất cả tuyến đường liên quan.', { duration: 5000 });
+      } else {
+        toast.success('Đã kích hoạt trạm dừng!');
+      }
       mutate();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
@@ -70,7 +74,7 @@ export const useStations = (initialParams?: GetStationsParams) => {
     }
   };
 
-  // Tạm dừng hoạt động trạm dừng (xóa mềm + cập nhật thứ tự)
+  // Tạm dừng hoạt động trạm dừng (xóa mềm)
   const deleteStation = async (id: string) => {
     try {
       await stationService.deleteStation(id);

@@ -33,7 +33,7 @@ export const useRoutes = (initialParams?: GetRoutesParams) => {
   const deleteRoute = async (routeCode: string) => {
     try {
       await routeService.deleteRoute(routeCode);
-      toast.success('Xóa tuyến đường thành công');
+      toast.success('Đã xóa tuyến đường. Các chuyến đi đang chờ thuộc tuyến này cũng đã được hủy.', { duration: 5000 });
       mutate();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Lỗi khi xóa tuyến đường');

@@ -53,17 +53,6 @@ export const usePromotions = (initialParams?: GetPromotionsParams) => {
     }
   };
 
-  const deletePromotion = async (id: string) => {
-    try {
-      await promotionService.deletePromotion(id);
-      toast.success('Đã xóa mã khuyến mãi');
-      mutate();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Lỗi khi xóa mã khuyến mãi');
-      throw error;
-    }
-  };
-
   const toggleStatus = async (promo: Promotion) => {
     try {
       await promotionService.togglePromotionStatus(promo.id);
@@ -87,7 +76,6 @@ export const usePromotions = (initialParams?: GetPromotionsParams) => {
     changePage,
     createPromotion,
     updatePromotion,
-    deletePromotion,
     toggleStatus,
     mutate,
   };

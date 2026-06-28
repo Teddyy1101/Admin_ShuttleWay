@@ -266,13 +266,14 @@ export default function TripsPage() {
   };
 
   // Hàm format giờ — hiển thị giờ Việt Nam (UTC+7)
-  const formatTime = (dateStr?: string | null) => {
+  const formatTime = (dateStr?: string | null, status?: TripStatus) => {
     if (!dateStr) return '—';
     try {
+      const timeZone = status === TripStatus.PENDING ? 'UTC' : 'Asia/Ho_Chi_Minh';
       return new Date(dateStr).toLocaleTimeString('vi-VN', {
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'Asia/Ho_Chi_Minh',
+        timeZone: timeZone,
       });
     } catch {
       return '—';
@@ -514,7 +515,7 @@ export default function TripsPage() {
                       <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
                           <Clock size={14} className="text-gray-400" />
-                          {formatTime(trip.startTime)}
+                          {formatTime(trip.startTime, trip.status)}
                         </div>
                       </td>
 

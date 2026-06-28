@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Bus, Mail, Lock, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { setCookie } from 'cookies-next';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -20,7 +21,17 @@ export default function LoginPage() {
     checkAuth();
   }, [checkAuth]);
 
-
+  // Nếu đã authenticated (có token trong localStorage) -> redirect về trang chủ
+  // Đồng thời sync lại cookie để middleware hoạt động đúng
+  useEffect(() => {
+    if (isAuthenticated) {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        setCookie('accessToken', token, { maxAge: 60 * 60 * 24 });
+      }
+      router.replace('/');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +56,7 @@ export default function LoginPage() {
     }
   };
 
-  if (isAuthenticated) return null; // Tránh flash content
+  if (isAuthenticated) return null; // Tránh flash content khi đang redirect
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-zinc-50 dark:bg-black overflow-hidden relative">

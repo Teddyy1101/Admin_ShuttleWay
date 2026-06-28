@@ -30,11 +30,11 @@ export const useDashboard = () => {
   };
 };
 
-// Hook lấy biểu đồ doanh thu 7 ngày
-export const useRevenueChart = () => {
+// Hook lấy biểu đồ doanh thu (có lọc ngày tùy chọn)
+export const useRevenueChart = (startDate?: string, endDate?: string) => {
   const { data, error, isLoading } = useSWR<{ data: RevenueDataPoint[] }>(
-    '/dashboard/revenue-chart',
-    () => dashboardService.getRevenueChart(),
+    ['/dashboard/revenue-chart', startDate, endDate],
+    () => dashboardService.getRevenueChart(startDate, endDate),
     {
       refreshInterval: 60000, // Refresh mỗi 60 giây
       onError: (err) => {
@@ -131,6 +131,69 @@ export const useLiveTrips = () => {
 
   return {
     liveTrips: data?.data || [],
+    isLoading,
+    isError: !!error,
+  };
+};
+// Hook lấy công việc cần xử lý
+export const usePendingTasks = () => {
+  const { data, error, isLoading } = useSWR<{ data: { pendingLeaves: number; openSupport: number; total: number } }>(
+    '/dashboard/pending-tasks',
+    () => dashboardService.getPendingTasks(),
+    {
+      refreshInterval: 30000,
+      onError: (err) => {
+        console.error(err);
+      },
+    }
+  );
+
+  return {
+    pendingTasks: data?.data || null,
+    isLoading,
+    isError: !!error,
+  };
+};
+
+// Hook lấy top 5 tuyến đường phổ biến
+export const usePopularRoutes = () => {
+  const { data, error, isLoading } = useSWR<{ data: { routeId: string; routeCode: string; name: string; ticketCount: number }[] }>(
+    '/dashboard/popular-routes',
+    () => dashboardService.getPopularRoutes(),
+    {
+      refreshInterval: 60000,
+      onError: (err) => {
+        toast.error(
+          err.response?.data?.message || 'Lỗi khi tải tuyến đường phổ biến'
+        );
+      },
+    }
+  );
+
+  return {
+    popularRoutes: data?.data || [],
+    isLoading,
+    isError: !!error,
+  };
+};
+
+// Hook lấy thống kê tỷ lệ đúng giờ
+export const usePunctualityStats = () => {
+  const { data, error, isLoading } = useSWR<{ data: { date: string; onTime: number; late: number }[] }>(
+    '/dashboard/punctuality',
+    () => dashboardService.getPunctualityStats(),
+    {
+      refreshInterval: 60000,
+      onError: (err) => {
+        toast.error(
+          err.response?.data?.message || 'Lỗi khi tải thống kê đúng giờ'
+        );
+      },
+    }
+  );
+
+  return {
+    punctualityData: data?.data || [],
     isLoading,
     isError: !!error,
   };

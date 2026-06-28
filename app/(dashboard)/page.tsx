@@ -7,7 +7,11 @@ import TopDriversChart from '@/components/dashboard/TopDriversChart';
 import TripStatusChart from '@/components/dashboard/TripStatusChart';
 import RecentActivities from '@/components/dashboard/RecentActivities';
 import LiveTrips from '@/components/dashboard/LiveTrips';
+import DashboardReportExport from '@/components/dashboard/DashboardReportExport';
 import DashboardSkeleton from '@/components/dashboard/SkeletonLoader';
+import PendingTasksAlert from '@/components/dashboard/PendingTasksAlert';
+import PopularRoutesChart from '@/components/dashboard/PopularRoutesChart';
+import PunctualityChart from '@/components/dashboard/PunctualityChart';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Users, Bus, MapPin, Banknote } from 'lucide-react';
 
@@ -86,15 +90,21 @@ export default function DashboardPage() {
 
   return (
     <PageWrapper>
-      {/* Tiêu đề trang */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Tổng quan
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Xin chào! Đây là tổng quan hệ thống hôm nay.
-        </p>
+      {/* Tiêu đề trang + Nút xuất báo cáo */}
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Tổng quan
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Xin chào! Đây là tổng quan hệ thống hôm nay.
+          </p>
+        </div>
+        <DashboardReportExport />
       </div>
+
+      {/* Cảnh báo công việc cần xử lý */}
+      <PendingTasksAlert />
 
       {/* 4 Thẻ thống kê với stagger animation */}
       <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -115,24 +125,33 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Biểu đồ doanh thu + Top tài xế */}
+      {/* Biểu đồ doanh thu + Tỷ lệ đúng giờ */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
           <RevenueChart />
         </div>
         <div className="xl:col-span-1">
-          <TripStatusChart />
+          <PunctualityChart />
         </div>
       </div>
 
-      <div className="mt-6">
+      {/* Top 5 Tài xế + Tuyến đường phổ biến */}
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <TopDriversChart />
+        <PopularRoutesChart />
       </div>
 
-      {/* Hoạt động gần đây + Chuyến xe đang chạy */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <RecentActivities />
-        <LiveTrips />
+      {/* Hoạt động gần đây + Trạng thái chuyến đi / Chuyến xe đang chạy */}
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="xl:col-span-1">
+          <TripStatusChart />
+        </div>
+        <div className="xl:col-span-1">
+          <LiveTrips />
+        </div>
+        <div className="xl:col-span-1">
+          <RecentActivities />
+        </div>
       </div>
     </PageWrapper>
   );

@@ -1,44 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { useTopDrivers } from '@/hooks/useDashboard';
 import { Trophy } from 'lucide-react';
-
-// Gradient colors cho các cột bar chart
-const barColors = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe'];
-
-// Custom tooltip
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: Array<{ value: number; payload: { fullName: string; avatarUrl: string | null } }>;
-}
-
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
-  if (active && payload && payload.length) {
-    return (
-      <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-          {payload[0].payload.fullName}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {payload[0].value} chuyến hoàn thành
-        </p>
-      </div>
-    );
-  }
-  return null;
-}
 
 // Biểu đồ Top 5 tài xế có nhiều chuyến đi hoàn thành nhất
 export default function TopDriversChart() {
@@ -63,7 +29,7 @@ export default function TopDriversChart() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5, duration: 0.5, ease: 'easeOut' }}
-      className="rounded-2xl border border-gray-200/60 bg-white p-6 shadow-sm dark:border-gray-700/40 dark:bg-gray-900"
+      className="rounded-2xl border border-gray-200/60 bg-white p-6 shadow-sm dark:border-gray-700/40 dark:bg-gray-900 h-full flex flex-col"
     >
       {/* Tiêu đề */}
       <div className="mb-6 flex items-center justify-between">
@@ -81,37 +47,9 @@ export default function TopDriversChart() {
       </div>
 
       {topDrivers.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* Bar Chart */}
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topDrivers} layout="vertical" margin={{ left: 0, right: 20 }}>
-              <XAxis
-                type="number"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}
-              />
-              <YAxis
-                dataKey="fullName"
-                type="category"
-                axisLine={false}
-                tickLine={false}
-                width={100}
-                tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 11 }}
-              />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: isDark ? '#1f2937' : '#f3f4f6' }} />
-              <Bar dataKey="tripCount" radius={[0, 6, 6, 0]} barSize={24}>
-                {topDrivers.map((_entry, index) => (
-                  <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-            </ResponsiveContainer>
-          </div>
-
+        <div className="flex-1 flex flex-col">
           {/* Danh sách chi tiết */}
-          <div className="space-y-3 lg:pl-6 lg:border-l lg:border-gray-200 dark:lg:border-gray-800">
+          <div className="space-y-3">
             {topDrivers.map((driver, index) => (
               <div
                 key={driver.id}
